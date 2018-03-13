@@ -2,14 +2,12 @@
 #include <stdlib.h>
 #include <chrono>
 #include <algorithm>
-//typedef vi volatile int;
-//typedef int vi;
-//#include "papi.h"
-
+#include "papi.h"
+#include <cilk/cilk.h>
 using namespace std;
 using namespace std::chrono;
 
-int  n = 100;
+int  n = 500;
 void readInput(int  (*mat) [n][n]);
 void iter_mm_ijk(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
@@ -26,9 +24,25 @@ int  main(){
 	int  (*p_x) [n][n] = &x;
 	int  (*p_y) [n][n] = &y;
 	int  (*p_z) [n][n] = &z;
+	//int events[3] = {PAPI_L1_TCM,PAPI_L2_TCM,PAPI_L3_TCM};
+	//long long values[3];
+	int events[1] = {PAPI_L1_TCM};
+	long long values[1];
+	int ret;	
+
+	if (PAPI_num_counters() < 2) {
+   		fprintf(stderr, "No hardware counters here, or PAPI not supported.\n");
+   		exit(1);
+	}
+	
 	readInput(p_x);
 	readInput(p_y);
 	initialize(p_z);
+	if ((ret = PAPI_start_counters(events, 1)) != PAPI_OK) {
+   		fprintf(stderr, "PAPI failed to start counters: %s\n", PAPI_strerror(ret));
+   		exit(1);
+	}
+	
 	iter_mm_ijk(p_z,p_x,p_y,n);
 
 	//adInput(p_x);
@@ -55,22 +69,29 @@ int  main(){
 	//readInput(p_y);
 	initialize(p_z);
 	iter_mm_kji(p_z,p_x,p_y,n);
+	
+	if ((ret = PAPI_read_counters(values, 1)) != PAPI_OK) {
+		fprintf(stderr, "PAPI failed to read counters: %s\n", PAPI_strerror(ret));
+		exit(1);
+	}
+	
+	cout<<"L1 : "<<values[0]<<" L2: "<<values[0]<<" L3: "<<values[0]<<endl;
 	cout<<"Done with multiplication";
 }
 void readInput(int  (*mat) [n][n]){
 	int  min = 10;
 	int  max = 100;
-	cout<<"Input Matrix";
+//	cout<<"Input Matrix";
 	//Code referred from : https://stackoverflow.com/questions/5008804/generating-random-int eger-from-a-range
 	for(int  i=0;i<n;i++){
 	for(int  j=0;j<n;j++){
 	int  randInt = min + (rand() % static_cast<int>(max - min + 1));
 		(*mat)[i][j]=randInt;
 	//	(*mat)[i][j]=j;
-		cout<<" "<<(*mat)[i][j]<<" ";
+	//	cout<<" "<<(*mat)[i][j]<<" ";
 	//	(*mat)[i][j]=1;
 	}
-		cout<<endl;
+	//	cout<<endl;
 	}
 }
 

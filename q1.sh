@@ -6,5 +6,5 @@
 #SBATCH --mem=1 # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH -o op.out # File to which STDOUT will be written
 #SBATCH -e question1.err # File to which STDERR will be written
-./question1.out
+./matMul.out
 
