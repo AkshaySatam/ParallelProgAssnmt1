@@ -125,24 +125,26 @@ void __attribute__ ((optimize("O0"))) iter_mm_ijk(int  (*z) [n][n],int (*x) [n][
 	}
 	}
 	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
+	auto duration = duration_cast<seconds>(stop - start);
 	cout <<"Matrix ijk: "<<duration.count() << endl;
 //	printMatrix(&op);
 }
+
+//TODO fastest
 void __attribute__ ((optimize("O0"))) iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n){
 	int op [n][n];
 	initialize(&op);
 	auto start = high_resolution_clock::now();
-	for(int  i=0;i<n;i++){
-	for(int  k=0;k<n;k++){
-	for(int  j=0;j<n;j++){
+	cilk_for(int  i=0;i<n;i++){
+	cilk_for(int  k=0;k<n;k++){
+	cilk_for(int  j=0;j<n;j++){
 	//	(*z)[i][j]= (*z)[i][j] + (*x)[i][k] * (*y)[k][j];
 		op[i][j]= op[i][j] + (*x)[i][k] * (*y)[k][j];
 	}
 	}
 	}
 	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
+	auto duration = duration_cast<seconds>(stop - start);
 	cout <<"Matrix ikj: "<<duration.count() << endl;
 //	printMatrix(&op);
 }
@@ -156,7 +158,7 @@ void __attribute__ ((optimize("O0"))) iter_mm_jik(int  (*z) [n][n],int (*x) [n][
 	}
 	}
 	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
+	auto duration = duration_cast<seconds>(stop - start);
 	cout <<"Matrix jik: "<<duration.count() << endl;
 //	printMatrix(z);
 }
@@ -170,21 +172,23 @@ void __attribute__ ((optimize("O0"))) iter_mm_jki(int  (*z) [n][n],int (*x) [n][
 	}
 	}
 	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
+	auto duration = duration_cast<seconds>(stop - start);
 	cout <<"Matrix jki: "<<duration.count() << endl;
 //	printMatrix(z);
 }
+
+//TODO fastest
 void __attribute__ ((optimize("O0"))) iter_mm_kij(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n){
 	auto start = high_resolution_clock::now();
-	for(int  k=0;k<n;k++){
-	for(int  i=0;i<n;i++){
-	for(int  j=0;j<n;j++){
+	cilk_for(int  k=0;k<n;k++){
+	cilk_for(int  i=0;i<n;i++){
+	cilk_for(int  j=0;j<n;j++){
 		(*z)[i][j]= (*z)[i][j] + (*x)[i][k] * (*y)[k][j];
 	}
 	}
 	}
 	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
+	auto duration = duration_cast<seconds>(stop - start);
 	cout <<"Matrix kij: "<<duration.count() << endl;
 //	printMatrix(z);
 }
@@ -198,7 +202,7 @@ void __attribute__ ((optimize("O0"))) iter_mm_kji(int  (*z) [n][n],int (*x) [n][
 	}
 	}
 	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
+	auto duration = duration_cast<seconds>(stop - start);
 	cout <<"Matrix kji: "<<duration.count() << endl;
 //	printMatrix(z);
 }
