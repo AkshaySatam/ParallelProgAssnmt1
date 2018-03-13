@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <chrono>
 #include <algorithm>
-#include "papi.h"
+#include <papi.h>
 #include <cilk/cilk.h>
 using namespace std;
 using namespace std::chrono;
 
-int  n = 500;
+int  n = 1024;
 void readInput(int  (*mat) [n][n]);
 void iter_mm_ijk(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
