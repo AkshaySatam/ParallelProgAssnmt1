@@ -1,0 +1,782 @@
+// Rec-MM ( X, Y ) { X and Y are n × n matrices,
+// where n = 2k for integer k ≥ 0 }
+// 2. if n = 1 then
+// 4. else
+// 5. Z11 ← Rec-MM ( X11, Y11 ) + Rec-MM ( X12, Y21 )
+// 6. Z12 ← Rec-MM ( X11, Y12 ) + Rec-MM ( X12, Y22 )
+// 7. Z21 ← Rec-MM ( X21, Y11 ) + Rec-MM ( X22, Y21 )
+// 8. Z22 ← Rec-MM ( X21, Y12 ) + Rec-MM ( X22, Y22 )
+// 10. return Z
+
+// https://github.com/sajjadpoores/matrix_multiplication2/blob/master/matrix%20mul.cpp
+
+
+
+#include <iostream>
+#include <chrono>
+#include <cilk/cilk.h>
+#include "ThreadPool.h"
+#include <unistd.h>
+using namespace std;
+using namespace std::chrono;
+
+// void matrix_mul(int **a, int **b, int **c, int n, thread_pool* tp);
+// void matrix_sum(int **a,int **b, int **c, int n){
+// 	for (int i = 0; i < n;i++)
+// 	for (int j = 0; j < n; j++){
+// 		c[i][j] = a[i][j] + b[i][j];
+// 	}
+// }
+
+// void eval11(int** a11, int** b11, int** a12, int** b21, int** c11, int n){
+
+// 	int **temp1 = new int*[(n/2)];
+// 	int **temp2 = new int*[(n/2)];
+// 	for (int i = 0; i < (n/2); i++){
+// 		temp1[i] = new int[(n/2)];
+// 		temp2[i] = new int[(n/2)];
+// 	}
+
+// 	matrix_mul(a11, b11, temp1, (n/2), NULL);
+// 	matrix_mul(a12, b21, temp2, (n/2), NULL);
+// 	matrix_sum(temp1, temp2, c11, (n/2));
+
+// 	for (int i = 0; i < (n/2); i++){
+// 		delete[] temp1[i];
+// 		delete[] temp2[i];	
+// 	}
+// }
+
+// void eval12(int** a11, int** b12, int** a12, int** b22, int** c12, int n){
+
+// 	int **temp1 = new int*[(n/2)];
+// 	int **temp2 = new int*[(n/2)];
+// 	for (int i = 0; i < (n/2); i++){
+// 		temp1[i] = new int[(n/2)];
+// 		temp2[i] = new int[(n/2)];
+// 	}
+
+// 	matrix_mul(a11, b12, temp1, (n/2), NULL);
+// 	matrix_mul(a12, b22, temp2, (n/2), NULL);
+// 	matrix_sum(temp1, temp2, c12, (n/2));
+
+// 	for (int i = 0; i < (n/2); i++){
+// 		delete[] temp1[i];
+// 		delete[] temp2[i];	
+// 	}
+// }
+
+// void eval21(int** a21, int** b11, int** a22, int** b21, int** c21, int n){
+
+// 	int **temp1 = new int*[(n/2)];
+// 	int **temp2 = new int*[(n/2)];
+// 	for (int i = 0; i < (n/2); i++){
+// 		temp1[i] = new int[(n/2)];
+// 		temp2[i] = new int[(n/2)];
+// 	}
+
+// 	matrix_mul(a21, b11, temp1, (n/2), NULL);
+// 	matrix_mul(a22, b21, temp2, (n/2), NULL);
+// 	matrix_sum(temp1, temp2, c21, (n/2));
+
+// 	for (int i = 0; i < (n/2); i++){
+// 		delete[] temp1[i];
+// 		delete[] temp2[i];	
+// 	}
+
+// }
+
+
+// void eval22(int** a21, int** b12, int** a22, int** b22, int** c22, int n){
+
+// 	int **temp1 = new int*[(n/2)];
+// 	int **temp2 = new int*[(n/2)];
+// 	for (int i = 0; i < (n/2); i++){
+// 		temp1[i] = new int[(n/2)];
+// 		temp2[i] = new int[(n/2)];
+// 	}
+
+// 	matrix_mul(a21, b12, temp1, (n/2), NULL);
+// 	matrix_mul(a22, b22, temp2, (n/2), NULL);
+// 	matrix_sum(temp1, temp2, c22, (n/2));
+
+// 	for (int i = 0; i < (n/2); i++){
+// 		delete[] temp1[i];
+// 		delete[] temp2[i];	
+// 	}
+// }
+
+// void evalspec(int** a11, int** b11, int** a12, int** b21, int** c11, int n, thread_pool* tp){
+
+// 	int **temp1 = new int*[(n/2)];
+// 	int **temp2 = new int*[(n/2)];
+// 	for (int i = 0; i < (n/2); i++){
+// 		temp1[i] = new int[(n/2)];
+// 		temp2[i] = new int[(n/2)];
+// 	}
+
+// 	matrix_mul(a11, b11, temp1, (n/2), tp);
+// 	matrix_mul(a12, b21, temp2, (n/2), tp);
+// 	matrix_sum(temp1, temp2, c11, (n/2));
+
+// 	for (int i = 0; i < (n/2); i++){
+// 		delete[] temp1[i];
+// 		delete[] temp2[i];	
+// 	}
+// }
+
+// class myjob : public job{
+// public:
+
+// 	int** a11;
+// 	int** b11; 
+// 	int** a12; 
+// 	int** b21; 
+// 	int** c11; 
+// 	int n;
+// 	thread_pool* tp;
+// 	volatile int* sync_wait;
+// 	pthread_mutex_t* sync_lock;
+// 	// myjob(int id, int** _a11, int** _b11, int** _a12, int** _b21, int** _c11, int _n, thread_pool* _tp, int* _sync_wait, pthread_mutex_t* _sync_lock):
+
+// 	// myjob(int id):job(id)
+// 	// {}
+
+// 	// myjob(int id, int** _a11, int** _b11, int** _a12, int** _b21, int** _c11, int _n, thread_pool* _tp):
+// 	myjob(int id, int** _a11, int** _b11, int** _a12, int** _b21, int** _c11, int _n, thread_pool* _tp, volatile int* _sync_wait, pthread_mutex_t* _sync_lock):
+// 	job(id),
+// 	a11(_a11),
+// 	b11(_b11),
+// 	a12(_a12),
+// 	b21(_b21),
+// 	c11(_c11),
+// 	n(_n),
+// 	tp(_tp),
+// 	sync_wait(_sync_wait),
+// 	sync_lock(_sync_lock)	
+// 	{
+// 		// cout << "Constructor"<< endl;
+// 	}
+
+
+// 	void working(void* param){
+// 		int tid = *((int *)param);
+// 		// cout << "Printing from thread " << tid << " Job Id " << jobID << endl;
+// 		int **temp1 = new int*[(n/2)];
+// 		int **temp2 = new int*[(n/2)];
+// 		for (int i = 0; i < (n/2); i++){
+// 			temp1[i] = new int[(n/2)];
+// 			temp2[i] = new int[(n/2)];
+// 		}
+
+// 		matrix_mul(a11, b11, temp1, (n/2), tp);
+// 		matrix_mul(a12, b21, temp2, (n/2), tp);
+// 		matrix_sum(temp1, temp2, c11, (n/2));
+
+// 		for (int i = 0; i < (n/2); i++){
+// 			delete[] temp1[i];
+// 			delete[] temp2[i];	
+// 		}
+
+// 		cout << 
+// 		// guard by lock
+// 		pthread_mutex_lock(sync_lock);
+// 		(*sync_wait)--;
+// 		// cout << "~~~~~~--- Going to unlock from " << tid << " " << jobID << " " <<  *sync_wait << endl;
+// 		pthread_mutex_unlock(sync_lock);
+// 		// pthread_cond_signal(sync_cond);   
+// 	}
+// };
+
+// int totaljobs = 0;
+
+// #define _PARALLEL_
+
+// void matrix_mul(int **a, int **b, int **c, int n, thread_pool* tp){
+// 	if (n == 1)
+// 	{
+// 		c[0][0] = a[0][0] * b[0][0];
+// 	}
+// 	else
+// 	{
+// 		int **a11 = new int*[(n/2)];
+// 		int **a12 = new int*[(n/2)];
+// 		int **a21 = new int*[(n/2)];
+// 		int **a22 = new int*[(n/2)];
+
+// 		int **b11 = new int*[(n/2)];
+// 		int **b12 = new int*[(n/2)];
+// 		int **b21 = new int*[(n/2)];
+// 		int **b22 = new int*[(n/2)];
+
+// 		int **c11 = new int*[(n/2)];
+// 		int **c12 = new int*[(n/2)];
+// 		int **c21 = new int*[(n/2)];
+// 		int **c22 = new int*[(n/2)];
+
+
+
+// 		for (int i = 0; i < (n/2); i++){
+// 			a11[i] = new int[(n/2)];
+// 			a12[i] = new int[(n/2)];
+// 			a21[i] = new int[(n/2)];
+// 			a22[i] = new int[(n/2)];
+
+// 			b11[i] = new int[(n/2)];
+// 			b12[i] = new int[(n/2)];
+// 			b21[i] = new int[(n/2)];
+// 			b22[i] = new int[(n/2)];
+
+// 			c11[i] = new int[(n/2)];
+// 			c12[i] = new int[(n/2)];
+// 			c21[i] = new int[(n/2)];
+// 			c22[i] = new int[(n/2)];
+
+// 		}
+
+// 		for (int i = 0; i < (n/2); i++){
+// 			for (int j = 0; j < (n/2); j++){
+// 				a11[i][j] = a[i][j];
+// 				a12[i][j] = a[i][j + (n/2)];
+// 				a21[i][j] = a[i + (n/2)][j];
+// 				a22[i][j] = a[i + (n/2)][j + (n/2)];
+
+// 				b11[i][j] = b[i][j];
+// 				b12[i][j] = b[i][j + (n/2)];
+// 				b21[i][j] = b[i + (n/2)][j];
+// 				b22[i][j] = b[i + (n/2)][j + (n/2)];
+// 			}
+// 		}
+		
+// 		#ifdef _PARALLEL_
+
+// 		volatile int* sync_wait = new int;
+// 		*sync_wait = 3;
+// 		pthread_mutex_t* sync_lock = new pthread_mutex_t;
+// 		pthread_mutex_init(sync_lock, NULL);
+
+
+// 		// cilk_spawn eval11(a11, b11, a12, b21, c11, n);
+// 		myjob* j1 = new myjob(++totaljobs, a11, b11, a12, b21, c11, n, tp, sync_wait, sync_lock);
+// 		tp->assignJob(j1);
+
+
+
+// 		// cilk_spawn eval11(a11, b12, a12, b22, c12, n);
+// 		myjob* j2 = new myjob(++totaljobs, a11, b12, a12, b22, c12, n, tp, sync_wait, sync_lock);
+// 		tp->assignJob(j2);
+
+
+// 		// cilk_spawn eval11(a21, b11, a22, b21, c21, n);
+// 		myjob* j3 = new myjob(++totaljobs, a21, b11, a22, b21, c21, n, tp, sync_wait, sync_lock);
+// 		tp->assignJob(j3);
+
+
+// 		// cilk_spawn eval11(a21, b12, a22, b22, c22, n);
+// 		evalspec(a21, b12, a22, b22, c22, n, tp);
+// 		// myjob* j4 = new myjob(++totaljobs, a21, b12, a22, b22, c22, n, tp, sync_wait, sync_lock);
+// 		// tp->assignJob(j4);
+
+
+// 		// cout << "-- Waiting for unlock\n";
+// 		while(1){
+// 			//Wait
+// 			pthread_mutex_lock(sync_lock);
+// 			// cout << *sync_wait << endl;
+// 			if(*sync_wait == 0){
+// 				pthread_mutex_unlock(sync_lock);
+// 				break;
+// 			}
+// 			else
+// 			{
+// 				pthread_mutex_unlock(sync_lock);
+// 				// sleep(2);
+// 			}
+// 		}
+
+// 		// cout << "--- Unlocked" << endl;
+// 		// cilk_sync;
+
+// 		#else
+
+// 		// eval11(a11, b11, a12, b21, c11, n);
+
+// 		// eval11(a11, b12, a12, b22, c12, n);
+
+// 		// eval11(a21, b11, a22, b21, c21, n);
+
+// 		// eval11(a21, b12, a22, b22, c22, n);		
+
+// 		#endif
+
+// 		for (int i = 0; i < n / 2; i++){
+// 			for (int j = 0; j < n / 2; j++){
+// 				c[i][j] = c11[i][j];
+// 				c[i][j + (n / 2)] = c12[i][j];
+// 				c[i + (n / 2)][j] = c21[i][j];
+// 				c[i + (n / 2)][j + (n / 2)] = c22[i][j];
+// 			}
+// 		}
+	
+
+			
+// 		for (int i = 0; i < (n/2); i++){
+// 			delete[] a11[i];
+// 			delete[] a12[i];
+// 			delete[] a21[i];
+// 			delete[] a22[i];
+
+// 			delete[] b11[i];
+// 			delete[] b12[i];
+// 			delete[] b21[i];
+// 			delete[] b22[i];
+
+// 			delete[] c11[i];
+// 			delete[] c12[i];
+// 			delete[] c21[i];
+// 			delete[] c22[i];
+			
+// 		}
+// 	}
+// }
+
+
+// void matrix_sumn(int **a, int **c, int n){
+// 	for (int i = 0; i < n;i++)
+// 	for (int j = 0; j < n; j++){
+// 		c[i][j] += a[i][j];
+// 	}
+// }
+
+// void evaln(int** a11, int** b11, int** c11, int n){
+
+// 	// int **temp1 = new int*[(n/2)];
+// 	// int **temp2 = new int*[(n/2)];
+// 	// for (int i = 0; i < (n/2); i++){
+// 	// 	temp1[i] = new int[(n/2)];
+// 	// 	temp2[i] = new int[(n/2)];
+// 	// }
+
+// 	matrix_mul(a11, b11, c11, (n/2), NULL);
+// 	// matrix_sum(temp1, temp2, c11, (n/2));
+
+// 	// for (int i = 0; i < (n/2); i++){
+// 	// 	delete[] temp1[i];
+// 	// 	delete[] temp2[i];	
+// 	// }
+// }
+
+class secondjob: job{
+public:
+	int* sync2;
+	int** a11;
+	int** b11; 
+	int** a12; 
+	int** b21; 
+	int** c11; 
+	int n;
+	thread_pool* tp;
+	pthread_mutex_t* sync_lock;
+
+	void working(){
+
+	if (n == 1)
+	{
+		c[0][0] += a[0][0] * b[0][0];
+	}
+	else
+	{
+			//create _a12, _b21, _c11
+
+			int* _sync2 = new int;
+			*_sync2 = 4;
+
+			//asign 4 jobs
+			secondjob* j1 = new secondjob(++totaljobs, _a12, _b21, _c11, n/2, _sync2, tp, sync_wait, sync_lock);
+			tp->assignJob(j1);	
+
+			secondjob* j2 = new secondjob(++totaljobs, _a12, _b22, _c12, n/2, _sync2, tp, sync_wait, sync_lock);
+			tp->assignJob(j2);	
+
+			secondjob* j3 = new secondjob(++totaljobs, _a22, _b21, _c21, n/2, _sync2, tp, sync_wait, sync_lock);
+			tp->assignJob(j3);	
+
+			secondjob* j4 = new secondjob(++totaljobs, _a22, _b22, _c22, n/2, _sync2, tp, sync_wait, sync_lock);
+			tp->assignJob(j4);						
+
+			*sync2--;
+			if (*sync2 == 0)
+			{
+				// complete
+				for (int i = 0; i < n / 2; i++){
+					for (int j = 0; j < n / 2; j++){
+						c[i][j] += c11[i][j];
+						c[i][j + (n / 2)] += c12[i][j];
+						c[i + (n / 2)][j] += c21[i][j];
+						c[i + (n / 2)][j + (n / 2)] += c22[i][j];
+					}
+				}					
+			}
+	}
+
+
+};
+
+
+
+class firstjob: job{
+public:
+	int* sync1;
+	int** a;
+	int** b; 
+	int** c; 
+	int n;
+	thread_pool* tp;
+	pthread_mutex_t* sync_lock;
+
+	void working(){
+
+	if (n == 1)
+	{
+		c[0][0] += a[0][0] * b[0][0];
+	}
+	else
+	{
+
+		//baby create _a11, _b11, _c11
+		int **_a11 = new int*[(n/2)];
+		int **_a12 = new int*[(n/2)];
+		int **_a21 = new int*[(n/2)];
+		int **_a22 = new int*[(n/2)];
+
+		int **_b11 = new int*[(n/2)];
+		int **_b12 = new int*[(n/2)];
+		int **_b21 = new int*[(n/2)];
+		int **_b22 = new int*[(n/2)];
+
+		int **_c11 = new int*[(n/2)];
+		int **_c12 = new int*[(n/2)];
+		int **_c21 = new int*[(n/2)];
+		int **_c22 = new int*[(n/2)];
+
+
+
+		for (int i = 0; i < (n/2); i++){
+			_a11[i] = new int[(n/2)];
+			_a12[i] = new int[(n/2)];
+			_a21[i] = new int[(n/2)];
+			_a22[i] = new int[(n/2)];
+
+			_b11[i] = new int[(n/2)];
+			_b12[i] = new int[(n/2)];
+			_b21[i] = new int[(n/2)];
+			_b22[i] = new int[(n/2)];
+
+			_c11[i] = new int[(n/2)];
+			_c12[i] = new int[(n/2)];
+			_c21[i] = new int[(n/2)];
+			_c22[i] = new int[(n/2)];
+
+		}
+
+		for (int i = 0; i < (n/2); i++){
+			for (int j = 0; j < (n/2); j++){
+				_a11[i][j] = a[i][j];
+				_a12[i][j] = a[i][j + (n/2)];
+				_a21[i][j] = a[i + (n/2)][j];
+				_a22[i][j] = a[i + (n/2)][j + (n/2)];
+
+				_b11[i][j] = b[i][j];
+				_b12[i][j] = b[i][j + (n/2)];
+				_b21[i][j] = b[i + (n/2)][j];
+				_b22[i][j] = b[i + (n/2)][j + (n/2)];
+
+				_c11[i][j] = 0;
+				_c12[i][j] = 0;
+				_c21[i][j] = 0;
+				_c22[i][j] = 0;
+			}
+		}
+
+			int* _sync1 = new int;
+			*_sync1 = 4;
+
+			//lock
+			hash[_sync] = this;
+
+
+			//asign 4 jobs
+			firstjob* j1 = new firstjob(++totaljobs, _a11, _b11, _c11, n/2, _sync1, tp, sync_wait, sync_lock);
+			tp->assignJob(j1);	
+
+			firstjob* j2 = new firstjob(++totaljobs, _a11, _b12, _c12, n/2, _sync1, tp, sync_wait, sync_lock);
+			tp->assignJob(j2);	
+
+			firstjob* j3 = new firstjob(++totaljobs, _a21, _b11, _c21, n/2, _sync1, tp, sync_wait, sync_lock);
+			tp->assignJob(j3);	
+
+			firstjob* j4 = new firstjob(++totaljobs, _a21, _b12, _c22, n/2, _sync1, tp, sync_wait, sync_lock);
+			tp->assignJob(j4);						
+
+			*sync1--;
+			if (*sync1 == 0)
+			{
+				// assign part 2
+
+				firstjob* j = hash[sync1];
+				//create sub jobs
+				int **__a11 = new int*[(n/2)];
+				int **__a12 = new int*[(n/2)];
+				int **__a21 = new int*[(n/2)];
+				int **__a22 = new int*[(n/2)];
+
+				int **__b11 = new int*[(n/2)];
+				int **__b12 = new int*[(n/2)];
+				int **__b21 = new int*[(n/2)];
+				int **__b22 = new int*[(n/2)];
+
+				int **__c11 = new int*[(n/2)];
+				int **__c12 = new int*[(n/2)];
+				int **__c21 = new int*[(n/2)];
+				int **__c22 = new int*[(n/2)];
+
+
+
+				for (int i = 0; i < (n/2); i++){
+					__a11[i] = new int[(n/2)];
+					__a12[i] = new int[(n/2)];
+					__a21[i] = new int[(n/2)];
+					__a22[i] = new int[(n/2)];
+
+					__b11[i] = new int[(n/2)];
+					__b12[i] = new int[(n/2)];
+					__b21[i] = new int[(n/2)];
+					__b22[i] = new int[(n/2)];
+
+					__c11[i] = new int[(n/2)];
+					__c12[i] = new int[(n/2)];
+					__c21[i] = new int[(n/2)];
+					__c22[i] = new int[(n/2)];
+
+				}
+
+				for (int i = 0; i < (n/2); i++){
+					for (int j = 0; j < (n/2); j++){
+						__a11[i][j] = j->a[i][j];
+						__a12[i][j] = j->a[i][j + (n/2)];
+						__a21[i][j] = j->a[i + (n/2)][j];
+						__a22[i][j] = j->a[i + (n/2)][j + (n/2)];
+
+						__b11[i][j] = j->b[i][j];
+						__b12[i][j] = j->b[i][j + (n/2)];
+						__b21[i][j] = j->b[i + (n/2)][j];
+						__b22[i][j] = j->b[i + (n/2)][j + (n/2)];
+
+						__c11[i][j] = 0;
+						__c12[i][j] = 0;
+						__c21[i][j] = 0;
+						__c22[i][j] = 0;
+					}
+				}
+
+
+				int* _sync2 = new int;
+				*_sync2 = 4;
+
+				secondjob* j1 = new secondjob(++totaljobs, __a12, __b21, __c11, n/2, _sync2, tp, sync_wait, sync_lock);
+				tp->assignJob(j1);
+
+				secondjob* j2 = new secondjob(++totaljobs, __a12, __b22, __c12, n/2, _sync2, tp, sync_wait, sync_lock);
+				tp->assignJob(j2);
+
+				secondjob* j3 = new secondjob(++totaljobs, __a22, __b21, __c21, n/2, _sync2, tp, sync_wait, sync_lock);
+				tp->assignJob(j3);
+
+				secondjob* j4 = new secondjob(++totaljobs, __a22, __b22, __c22, n/2, _sync2, tp, sync_wait, sync_lock);
+				tp->assignJob(j4);
+
+
+			}
+
+	}
+
+
+};
+
+
+void matrix_mul(int **a, int **b, int **c, int n){
+
+	if (n == 1)
+	{
+		c[0][0] += a[0][0] * b[0][0];
+	}
+	else
+	{
+		int **a11 = new int*[(n/2)];
+		int **a12 = new int*[(n/2)];
+		int **a21 = new int*[(n/2)];
+		int **a22 = new int*[(n/2)];
+
+		int **b11 = new int*[(n/2)];
+		int **b12 = new int*[(n/2)];
+		int **b21 = new int*[(n/2)];
+		int **b22 = new int*[(n/2)];
+
+		int **c11 = new int*[(n/2)];
+		int **c12 = new int*[(n/2)];
+		int **c21 = new int*[(n/2)];
+		int **c22 = new int*[(n/2)];
+
+
+
+		for (int i = 0; i < (n/2); i++){
+			a11[i] = new int[(n/2)];
+			a12[i] = new int[(n/2)];
+			a21[i] = new int[(n/2)];
+			a22[i] = new int[(n/2)];
+
+			b11[i] = new int[(n/2)];
+			b12[i] = new int[(n/2)];
+			b21[i] = new int[(n/2)];
+			b22[i] = new int[(n/2)];
+
+			c11[i] = new int[(n/2)];
+			c12[i] = new int[(n/2)];
+			c21[i] = new int[(n/2)];
+			c22[i] = new int[(n/2)];
+
+		}
+
+		for (int i = 0; i < (n/2); i++){
+			for (int j = 0; j < (n/2); j++){
+				a11[i][j] = a[i][j];
+				a12[i][j] = a[i][j + (n/2)];
+				a21[i][j] = a[i + (n/2)][j];
+				a22[i][j] = a[i + (n/2)][j + (n/2)];
+
+				b11[i][j] = b[i][j];
+				b12[i][j] = b[i][j + (n/2)];
+				b21[i][j] = b[i + (n/2)][j];
+				b22[i][j] = b[i + (n/2)][j + (n/2)];
+
+				c11[i][j] = 0;
+				c12[i][j] = 0;
+				c21[i][j] = 0;
+				c22[i][j] = 0;
+			}
+		}
+
+
+		cilk_spawn matrix_mul(a11, b11, c11, n/2);
+
+		cilk_spawn matrix_mul(a11, b12, c12, n/2);
+
+		cilk_spawn matrix_mul(a21, b11, c21, n/2);
+
+		cilk_spawn matrix_mul(a21, b12, c22, n/2);			
+
+		cilk_sync;
+
+		cilk_spawn matrix_mul(a12, b21, c11, n/2);
+
+		cilk_spawn matrix_mul(a12, b22, c12, n/2);
+
+		cilk_spawn matrix_mul(a22, b21, c21, n/2);
+
+		cilk_spawn matrix_mul(a22, b22, c22, n/2);	
+
+		cilk_sync;
+
+		for (int i = 0; i < n / 2; i++){
+			for (int j = 0; j < n / 2; j++){
+				c[i][j] += c11[i][j];
+				c[i][j + (n / 2)] += c12[i][j];
+				c[i + (n / 2)][j] += c21[i][j];
+				c[i + (n / 2)][j + (n / 2)] += c22[i][j];
+			}
+		}		
+
+		for (int i = 0; i < (n/2); i++){
+			delete[] a11[i];
+			delete[] a12[i];
+			delete[] a21[i];
+			delete[] a22[i];
+
+			delete[] b11[i];
+			delete[] b12[i];
+			delete[] b21[i];
+			delete[] b22[i];
+
+			delete[] c11[i];
+			delete[] c12[i];
+			delete[] c21[i];
+			delete[] c22[i];
+		}
+
+	}
+
+}
+
+void shareon(thread_pool* tp){
+
+	// sleep(5);
+	tp->shareon();
+}
+
+
+int main(int argc, char const *argv[])
+{
+
+
+	// thread_pool tp(1000);
+	// tp.start();
+	
+
+	int n = 4;
+	int** x = new int*[n];
+	int** y = new int*[n];
+	int** z = new int*[n];
+
+	for (int i = 0; i < n; ++i)
+	{
+		x[i] = new int[n];
+		y[i] = new int[n];
+		z[i] = new int[n];
+		for (int j = 0; j < n; ++j)
+		{
+			x[i][j] = j; 
+			y[i][j] = j;
+			z[i][j] = 0;
+		}
+	}
+
+	// shareon(&tp);
+
+	// cilk_sync;
+
+	auto start = high_resolution_clock::now();
+	matrix_mul(x, y, z, n);
+
+
+
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout <<"Matrix multiplication : "<<duration.count() << endl;
+
+	for (int i = 0; i < n; ++i)
+	{
+		for (int j = 0; j < n; ++j)
+		{
+			cout << z[i][j] << " ";
+		}
+		cout << endl;
+	}
+
+	// sleep(30);
+
+	// int xy;
+	// cin >> xy;
+
+	return 0;
+}
+
