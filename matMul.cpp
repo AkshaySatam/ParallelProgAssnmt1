@@ -434,7 +434,7 @@ void compare(int (*dummy) [n][n],int (*z) [n][n]){
 			cout<<"Matrices dont match"<<endl;
 			return;
 		}
->>>>>>> ab16a24ddeb2297315aec03b7f77b8efdea35616
+
 }
 
 void readInput(int  (*mat) [n][n]){
