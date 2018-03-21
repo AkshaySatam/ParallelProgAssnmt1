@@ -17,10 +17,17 @@ using namespace std;
 using namespace std::chrono;
 
 void matrix_mul(int **a, int **b, int **c, int n);
-void matrix_sum(int **a,int **b, int **c, int n){
+void matrix_sum2(int **a,int **b, int **c, int n){
 	for (int i = 0; i < n;i++)
 	for (int j = 0; j < n; j++){
 		c[i][j] = a[i][j] + b[i][j];
+	}
+}
+
+void matrix_sum(int **a, int **c, int n){
+	for (int i = 0; i < n;i++)
+	for (int j = 0; j < n; j++){
+		c[i][j] += a[i][j];
 	}
 }
 
@@ -34,67 +41,27 @@ void eval11(int** a11, int** b11, int** a12, int** b21, int** c11, int n){
 	}
 
 	matrix_mul(a11, b11, temp1, (n/2));
+	// matrix_mul(a12, b21, temp2, (n/2));
+	matrix_sum(temp1, c11, (n/2));
+
+	for (int i = 0; i < (n/2); i++){
+		delete[] temp1[i];
+		delete[] temp2[i];	
+	}
+}
+
+void eval12(int** a11, int** b11, int** a12, int** b21, int** c11, int n){
+
+	int **temp1 = new int*[(n/2)];
+	int **temp2 = new int*[(n/2)];
+	for (int i = 0; i < (n/2); i++){
+		temp1[i] = new int[(n/2)];
+		temp2[i] = new int[(n/2)];
+	}
+
+	// matrix_mul(a11, b11, temp1, (n/2));
 	matrix_mul(a12, b21, temp2, (n/2));
-	matrix_sum(temp1, temp2, c11, (n/2));
-
-	for (int i = 0; i < (n/2); i++){
-		delete[] temp1[i];
-		delete[] temp2[i];	
-	}
-}
-
-void eval12(int** a11, int** b12, int** a12, int** b22, int** c12, int n){
-
-	int **temp1 = new int*[(n/2)];
-	int **temp2 = new int*[(n/2)];
-	for (int i = 0; i < (n/2); i++){
-		temp1[i] = new int[(n/2)];
-		temp2[i] = new int[(n/2)];
-	}
-
-	matrix_mul(a11, b12, temp1, (n/2));
-	matrix_mul(a12, b22, temp2, (n/2));
-	matrix_sum(temp1, temp2, c12, (n/2));
-
-	for (int i = 0; i < (n/2); i++){
-		delete[] temp1[i];
-		delete[] temp2[i];	
-	}
-}
-
-void eval21(int** a21, int** b11, int** a22, int** b21, int** c21, int n){
-
-	int **temp1 = new int*[(n/2)];
-	int **temp2 = new int*[(n/2)];
-	for (int i = 0; i < (n/2); i++){
-		temp1[i] = new int[(n/2)];
-		temp2[i] = new int[(n/2)];
-	}
-
-	matrix_mul(a21, b11, temp1, (n/2));
-	matrix_mul(a22, b21, temp2, (n/2));
-	matrix_sum(temp1, temp2, c21, (n/2));
-
-	for (int i = 0; i < (n/2); i++){
-		delete[] temp1[i];
-		delete[] temp2[i];	
-	}
-
-}
-
-
-void eval22(int** a21, int** b12, int** a22, int** b22, int** c22, int n){
-
-	int **temp1 = new int*[(n/2)];
-	int **temp2 = new int*[(n/2)];
-	for (int i = 0; i < (n/2); i++){
-		temp1[i] = new int[(n/2)];
-		temp2[i] = new int[(n/2)];
-	}
-
-	matrix_mul(a21, b12, temp1, (n/2));
-	matrix_mul(a22, b22, temp2, (n/2));
-	matrix_sum(temp1, temp2, c22, (n/2));
+	matrix_sum(temp2, c11, (n/2));
 
 	for (int i = 0; i < (n/2); i++){
 		delete[] temp1[i];
@@ -156,6 +123,11 @@ void matrix_mul(int **a, int **b, int **c, int n){
 				b12[i][j] = b[i][j + (n/2)];
 				b21[i][j] = b[i + (n/2)][j];
 				b22[i][j] = b[i + (n/2)][j + (n/2)];
+
+				c11[i][j] = 0;
+				c12[i][j] = 0;
+				c21[i][j] = 0;
+				c22[i][j] = 0;
 			}
 		}
 		
@@ -164,26 +136,44 @@ void matrix_mul(int **a, int **b, int **c, int n){
 
 
 
+		cilk_spawn eval11(a11, b12, a12, b22, c12, n);
+
+
+
+		cilk_spawn eval11(a21, b11, a22, b21, c21, n);
+
+
+
+		cilk_spawn eval11(a21, b12, a22, b22, c22, n);
+
+
+		cilk_sync;
+
+		cilk_spawn eval12(a11, b11, a12, b21, c11, n);
+
+
+
 		cilk_spawn eval12(a11, b12, a12, b22, c12, n);
 
 
 
-		cilk_spawn eval21(a21, b11, a22, b21, c21, n);
+		cilk_spawn eval12(a21, b11, a22, b21, c21, n);
 
 
 
-		cilk_spawn eval22(a21, b12, a22, b22, c22, n);
+		cilk_spawn eval12(a21, b12, a22, b22, c22, n);
+
 	
 		cilk_sync;
 		#else
 
 		eval11(a11, b11, a12, b21, c11, n);
 
-		eval12(a11, b12, a12, b22, c12, n);
+		eval11(a11, b12, a12, b22, c12, n);
 
-		eval21(a21, b11, a22, b21, c21, n);
+		eval11(a21, b11, a22, b21, c21, n);
 
-		eval22(a21, b12, a22, b22, c22, n);		
+		eval11(a21, b12, a22, b22, c22, n);		
 
 		#endif
 
@@ -217,9 +207,9 @@ void matrix_mul(int **a, int **b, int **c, int n){
 	}
 }
 
-int main2(int argc, char const *argv[])
+int main(int argc, char const *argv[])
 {
-	int n = 16;
+	int n = 8;
 	int** x = new int*[n];
 	int** y = new int*[n];
 	int** z = new int*[n];

@@ -17,7 +17,7 @@ void iter_mm_kij(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void iter_mm_kji(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void initialize(int  (*z) [n][n]);
 
-int  main(){
+int  main2(){
 	int  x [n][n];
 	int  y [n][n];
 	int  z [n][n];
@@ -77,7 +77,9 @@ int  main(){
 	
 	cout<<"L1 : "<<values[0]<<" L2: "<<values[0]<<" L3: "<<values[0]<<endl;
 	cout<<"Done with multiplication";
+	return 0;
 }
+
 void readInput(int  (*mat) [n][n]){
 	int  min = 10;
 	int  max = 100;
