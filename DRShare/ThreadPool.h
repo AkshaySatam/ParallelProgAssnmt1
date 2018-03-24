@@ -8,6 +8,12 @@
 
 using namespace std;
 
+static unsigned int g_seed;
+// Used to seed the generator.           
+inline void fast_srand(int seed) {
+    g_seed = seed;
+}
+
 class job
 {
 public:
