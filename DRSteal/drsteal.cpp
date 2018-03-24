@@ -1090,8 +1090,13 @@ int main(int argc, char const *argv[])
 		cout << endl;
 	}
 
-	int xy;
-	cin >> xy;
+
+	tp.terminate();
+
+	sleep(5);
+
+	// int xy;
+	// cin >> xy;
 
 	return 0;
 }

@@ -1096,8 +1096,10 @@ int main(int argc, char const *argv[])
 		cout << endl;
 	}
 
-	int xy;
-	cin >> xy;
+
+	tp.terminate();
+	// int xy;
+	// cin >> xy;
 
 	return 0;
 }

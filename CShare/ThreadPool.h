@@ -34,6 +34,7 @@ class worker_thread{
 public:
     worker_thread(int _tid, thread_pool* _parentPool);
     ~worker_thread();
+    void terminate();
     void assignJob(job *_job_);
     void start();
     pthread_mutex_t jobDequeue_lock;
@@ -53,6 +54,7 @@ public:
     void assignJob(job *_job_, int tid);   //some huerestic to assign job to which thread round robin
     void assignJobMe(job* _job_, int tid);
     void start();
+    void terminate();
     void shareon();
     job* StealTask(worker_thread* p, int mytid);
     bool empty();

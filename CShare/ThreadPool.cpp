@@ -42,6 +42,16 @@ thread_pool::thread_pool(int num){
     }
 }
 
+void thread_pool::terminate(){
+    for (int i = 0; i < numOfThreads; ++i)
+    {
+        threads[i]->terminate();
+    }
+}
+
+void worker_thread::terminate(){
+    pthread_cancel(thread);
+}
 
 void thread_pool::start()
 {
@@ -50,6 +60,8 @@ void thread_pool::start()
         threads[i]->start();
     }
 }
+
+
 
 void thread_pool::assignJob(job* _job_, int threadid)
 {
