@@ -760,7 +760,7 @@ public:
 	}
 
 	void firstjob(int tid){
-		tid = 0;
+		// tid = 0;
 		if (n == 1)
 		{
 			// cout << "Hit 1 job base\n";
@@ -819,7 +819,7 @@ public:
 				if (parentState->type == 1)
 				{
 					//spawn 4 sub tasks
-					cout << "Executing second half for n = " << parentState->n << " " << tid << endl;
+					// cout << "Executing second half for n = " << parentState->n << " " << tid << endl;
 					int* curr_sync = new int;
 					*curr_sync = 4;
 					pthread_mutex_t* __sync_lock = new pthread_mutex_t;
@@ -1021,7 +1021,7 @@ int main(int argc, char const *argv[])
 	tp.start();
 	
 
-	int n = 16;
+	int n = 32;
 	int** x = new int*[n];
 	int** y = new int*[n];
 	int** z = new int*[n];
@@ -1048,18 +1048,16 @@ int main(int argc, char const *argv[])
 	// ultimate_matmul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
 
 
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	cout <<"Matrix multiplication : "<<duration.count() << endl;
 
-	for (int i = 0; i < n; ++i)
-	{
-		for (int j = 0; j < n; ++j)
-		{
-			cout << z[i][j] << " ";
-		}
-		cout << endl;
-	}
+
+	// for (int i = 0; i < n; ++i)
+	// {
+	// 	for (int j = 0; j < n; ++j)
+	// 	{
+	// 		cout << z[i][j] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
 
 	// sleep(2);
 	// shareon(&tp);
@@ -1071,6 +1069,10 @@ int main(int argc, char const *argv[])
 	while(!completedFlag){
 
 	}
+
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout <<"Matrix multiplication : "<<duration.count() << endl;
 
 	// sleep(10);
 	// cout << "I am here";

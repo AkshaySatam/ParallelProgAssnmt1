@@ -65,6 +65,14 @@ bool thread_pool::empty(){
     return true;
 }
 
+#include <random>
+int thread_pool::getRandomNumber(){
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 eng(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, numOfThreads-1); // define the range
+    return distr(eng);
+}
+
 job* thread_pool::StealTask(worker_thread* p, int mytid){
 
     if (!stealon)
@@ -74,12 +82,16 @@ job* thread_pool::StealTask(worker_thread* p, int mytid){
     //Implement your steal algo
     //dont look for own queue here else u will get a deadlock
 
-    for (int i = 0; i < numOfThreads; ++i)
-    {
+    int i = getRandomNumber();
+
+    
+
+    // for (int i = 0; i < numOfThreads; ++i)
+    // {
         if (i == mytid)
         {
             // cout << "Do check for " << i << endl;
-            continue;
+            return NULL;
         }
         
         if (!threads[i]->jobDequeue.empty())
@@ -97,7 +109,7 @@ job* thread_pool::StealTask(worker_thread* p, int mytid){
             return j;
         }
         // pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
-    }
+    // }
     return NULL;
 }
 
@@ -132,16 +144,16 @@ void worker_thread::assignJob(job *_job_){
     pthread_mutex_lock(&jobDequeue_lock);
     jobDequeue.push_back(_job_);
     pthread_mutex_unlock(&jobDequeue_lock);
-    pthread_cond_signal(&jobDequeue_cond);   
+    // pthread_cond_signal(&jobDequeue_cond);   
 }
 
 bool worker_thread::loadJob(job*& _job_, worker_thread* p)
 {
     pthread_mutex_lock(&jobDequeue_lock);
 
-    while(jobDequeue.empty() && (_job_ = StealTask(p)) && !_job_){
-        pthread_cond_wait(&jobDequeue_cond, &jobDequeue_lock);
-    }
+    // while(jobDequeue.empty() && (_job_ = StealTask(p)) && !_job_){
+    //     pthread_cond_wait(&jobDequeue_cond, &jobDequeue_lock);
+    // }
 
     // while(jobDequeue.empty())
     //     pthread_cond_wait(&jobDequeue_cond, &jobDequeue_lock);
@@ -155,6 +167,10 @@ bool worker_thread::loadJob(job*& _job_, worker_thread* p)
         return true;
     }
     
+    if((_job_ = StealTask(p)) && _job_){
+        pthread_mutex_unlock(&jobDequeue_lock);
+        return true;
+    }
 
     //if own job queue is empty look for other threads job queue and extract from back
     // _job_ = StealTask(p);
@@ -165,7 +181,7 @@ bool worker_thread::loadJob(job*& _job_, worker_thread* p)
 void worker_thread::start(){
 
     pthread_create(&thread, NULL, &worker_thread::threadExecute, (void *)this);
-    cout << "Thread:" << tid << " is alive now!\n";
+    // cout << "Thread:" << tid << " is alive now!\n";
 
 }
 

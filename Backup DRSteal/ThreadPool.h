@@ -55,6 +55,7 @@ public:
     void shareon();
     job* StealTask(worker_thread* p, int mytid);
     bool empty();
+    int getRandomNumber();
 
 private:
     vector<worker_thread*> threads;
