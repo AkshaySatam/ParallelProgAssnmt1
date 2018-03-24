@@ -588,14 +588,148 @@ int totaljobs = 0;
 
 // };
 
+	// void secondjob(int tid){
+	// 	if (n == 1)
+	// 	{
+	// 		// cout << "Hit 2 job base\n";
+	// 		c[ci][cj] += a[ai][aj] * b[bi][bj];
+
+	// 			pthread_mutex_lock(sync_lock);
+	// 			(*parent_sync)--;
+	// 			pthread_mutex_unlock(sync_lock);
+	// 			while (*parent_sync == 0)
+	// 			{
+	// 				pthread_mutex_lock(&hashLock);
+	// 				if (hashy.find(parent_sync) == hashy.end())
+	// 				{
+	// 					cout << "Bug while executing 22\n";
+	// 					return;
+	// 				}
+
+	// 				JobState* parentState = hashy[parent_sync];
+	// 				pthread_mutex_unlock(&hashLock);
+
+
+
+	// 				if (parentState->type == 1)
+	// 				{
+	// 					//spawn 4 sub tasks
+
+	// 					int* curr_sync = new int;
+	// 					*curr_sync = 4;
+	// 					pthread_mutex_t* __sync_lock = new pthread_mutex_t;
+	// 					pthread_mutex_init(__sync_lock, NULL);			
+
+
+	// 					pthread_mutex_lock(&hashLock);
+	// 					hashy[curr_sync] = new JobState(2, parentState->a, parentState->b, parentState->c, parentState->ai, parentState->aj, parentState->bi, parentState->bj, parentState->ci, parentState->cj, parentState->n, parentState->parent_sync, parentState->parent_lock);
+	// 					pthread_mutex_unlock(&hashLock);						
+
+	// 					//asign 4 jobs
+	// 					superjob* pj1 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj, parentState->ci, parentState->cj, parentState->n/2, curr_sync, tp, __sync_lock);
+	// 					tp->assignJob(pj1, tid);	
+
+	// 					superjob* pj2 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj+parentState->n/2, parentState->ci, parentState->cj + parentState->n/2, parentState->n/2, curr_sync, tp, __sync_lock);
+	// 					tp->assignJob(pj2, tid);	
+
+	// 					superjob* pj3 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai+parentState->n/2, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj, parentState->ci+parentState->n/2, parentState->cj, parentState->n/2, curr_sync, tp, __sync_lock);
+	// 					tp->assignJob(pj3, tid);	
+
+	// 					superjob* pj4 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai+parentState->n/2, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj+parentState->n/2, parentState->ci+parentState->n/2, parentState->cj+parentState->n/2, parentState->n/2, curr_sync, tp, __sync_lock);
+	// 					tp->assignJob(pj4, tid);	
+	// 					break;
+	// 				}		
+	// 				else
+	// 				{
+	// 					//completed this task
+	// 					cout << "Completed this task\n";
+
+
+	// 					parent_sync = parentState->parent_sync;
+	// 					pthread_mutex_lock(parentState->parent_lock);
+	// 					(*parent_sync)--;
+	// 					pthread_mutex_unlock(parentState->parent_lock);
+	// 				}	
+	// 			}
+	// 	}
+	// 	else
+	// 	{
+	// 		//create _a12, _b21, _c11
+
+	// 		int* curr_sync = new int;
+	// 		*curr_sync = 4;
+	// 		pthread_mutex_t* _sync_lock = new pthread_mutex_t;
+	// 		pthread_mutex_init(_sync_lock, NULL);
+
+	// 		pthread_mutex_lock(&hashLock);
+	// 		hashy[curr_sync] = new JobState(2, a, b, c, ai, aj, bi, bj, ci, cj, n, parent_sync, sync_lock);;
+	// 		pthread_mutex_unlock(&hashLock);
+			
+	// 		//asign 4 jobs
+	// 		superjob* j1 = new superjob(1, ++totaljobs, a, b, c, ai, aj+n/2, bi+n/2, bj, ci, cj, n/2, curr_sync, tp, _sync_lock);
+	// 		tp->assignJob(j1, tid);	
+
+	// 		superjob* j2 = new superjob(1, ++totaljobs, a, b, c, ai, aj+n/2, bi+n/2, bj+n/2, ci, cj + n/2, n/2, curr_sync, tp, _sync_lock);
+	// 		tp->assignJob(j2, tid);	
+
+	// 		superjob* j3 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj+n/2, bi+n/2, bj, ci+n/2, cj, n/2, curr_sync, tp, _sync_lock);
+	// 		tp->assignJob(j3, tid);	
+
+	// 		superjob* j4 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj+n/2, bi+n/2, bj+n/2, ci+n/2, cj+n/2, n/2, curr_sync, tp, _sync_lock);
+	// 		tp->assignJob(j4, tid);						
+	// 	}
+
+
+
+	// 	------------------------------------------------------------------
+
+
+volatile bool completedFlag = false;
+class JobState;
 class superjob;
-map<int*, superjob*> hashy;
+map<int*, JobState*> hashy;
 pthread_mutex_t hashLock;
+pthread_mutex_t headache;
+
+class JobState{
+public:
+	int type;
+	int* parent_sync;
+	int** a;
+	int** b; 
+	int** c; 
+	int ai; int aj; int bi; int bj; int ci; int cj;
+	int n;
+	pthread_mutex_t* parent_lock;
+	bool base;
+	int* current_sync;
+	pthread_mutex_t* current_lock;
+	
+	JobState(int _type, int** _a, int** _b, int** _c, int _ai, int _aj, int _bi, int _bj, int _ci, int _cj, int _n, int* _current_sync, pthread_mutex_t* _current_lock, int* _parent_sync, pthread_mutex_t* _parent_lock){
+		type = _type;
+		a = _a;
+		b = _b; 
+		c = _c; 
+		ai = _ai; 
+		aj = _aj; 
+		bi = _bi; 
+		bj = _bj; 
+		ci = _ci; 
+		cj = _cj;
+		n = _n;
+		parent_sync = _parent_sync;
+		parent_lock = _parent_lock;
+		current_sync = _current_sync;
+		current_lock = _current_lock;
+		base = false;		
+	}
+
+};
 
 class superjob: public job{
 public:
 	int type;
-	int* sync1;
+	int* parent_sync;
 	int** a;
 	int** b; 
 	int** c; 
@@ -605,11 +739,12 @@ public:
 	pthread_mutex_t* sync_lock;
 
 
+
 	superjob(int _type, int id, int** _a, int** _b, int** _c, int _ai, int _aj, int _bi, int _bj, int _ci, int _cj, int _n, int* _sync1, thread_pool* _tp, pthread_mutex_t* _sync_lock)
 	:job(id)
 	{
 		type = _type;
-		sync1 = _sync1;
+		parent_sync = _sync1;
 		a = _a;
 		b = _b; 
 		c = _c; 
@@ -621,128 +756,133 @@ public:
 		cj = _cj;
 		n = _n;
 		tp = _tp;
-		sync_lock = _sync_lock;		
+		sync_lock = _sync_lock;
 	}
 
 	void firstjob(int tid){
+		tid = 0;
 		if (n == 1)
 		{
+			// cout << "Hit 1 job base\n";
 			c[ci][cj] += a[ai][aj] * b[bi][bj];
+
+		
+
+
+			while (1)
+			{
+
+				pthread_mutex_lock(&hashLock);
+				if (hashy.find(parent_sync) == hashy.end())
+				{
+					cout << "Bug while executing 22\n";
+					pthread_mutex_unlock(&hashLock);
+					pthread_mutex_unlock(sync_lock);
+					return;
+				}
+
+				JobState* parentState = hashy[parent_sync];
+
+				pthread_mutex_unlock(&hashLock);
+
+
+
+
+
+				pthread_mutex_lock(parentState->current_lock);
+				if (parentState->base)
+				{
+					cout << "Game Over\n";
+					completedFlag = true;
+					break;
+				}
+
+				parent_sync = parentState->current_sync;
+				(*parent_sync)--;
+				// cout << "Completed this task" << *parentState->current_sync<< "\n";
+				if (*parent_sync != 0)
+				{
+					pthread_mutex_unlock(parentState->current_lock);
+					break;
+				}
+
+
+
+				parent_sync = parentState->parent_sync;
+				pthread_mutex_unlock(parentState->current_lock);
+
+
+
+
+
+
+				if (parentState->type == 1)
+				{
+					//spawn 4 sub tasks
+					cout << "Executing second half for n = " << parentState->n << " " << tid << endl;
+					int* curr_sync = new int;
+					*curr_sync = 4;
+					pthread_mutex_t* __sync_lock = new pthread_mutex_t;
+					pthread_mutex_init(__sync_lock, NULL);			
+
+
+					pthread_mutex_lock(&hashLock);
+					hashy[curr_sync] = new JobState(2, parentState->a, parentState->b, parentState->c, parentState->ai, parentState->aj, parentState->bi, parentState->bj, parentState->ci, parentState->cj, parentState->n, curr_sync, __sync_lock, parentState->parent_sync, parentState->parent_lock);
+					pthread_mutex_unlock(&hashLock);						
+
+					//asign 4 jobs
+					superjob* sj1 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj, parentState->ci, parentState->cj, parentState->n/2, curr_sync, tp, __sync_lock);
+					tp->assignJob(sj1, tid);	
+
+					superjob* sj2 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj+parentState->n/2, parentState->ci, parentState->cj + parentState->n/2, parentState->n/2, curr_sync, tp, __sync_lock);
+					tp->assignJob(sj2, tid);	
+
+					superjob* sj3 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai+parentState->n/2, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj, parentState->ci+parentState->n/2, parentState->cj, parentState->n/2, curr_sync, tp, __sync_lock);
+					tp->assignJob(sj3, tid);	
+
+					superjob* sj4 = new superjob(1, ++totaljobs, parentState->a, parentState->b, parentState->c, parentState->ai+parentState->n/2, parentState->aj+parentState->n/2, parentState->bi+parentState->n/2, parentState->bj+parentState->n/2, parentState->ci+parentState->n/2, parentState->cj+parentState->n/2, parentState->n/2, curr_sync, tp, __sync_lock);
+					tp->assignJob(sj4, tid);	
+					// cout << "Executed second half for n = " << parentState->n << " " << tid << endl;
+					break;
+				}			
+
+
+			}
+
+
+			
 
 		}
 		else
 		{
 
 			//baby create _a11, _b11, _c11
-
-
-			int* _sync1 = new int;
-			*_sync1 = 4;
+			int* curr_sync = new int;
+			*curr_sync = 4;
 			pthread_mutex_t* _sync_lock = new pthread_mutex_t;
 			pthread_mutex_init(_sync_lock, NULL);		
 			//lock
 			pthread_mutex_lock(&hashLock);
-			hashy[_sync1] = this;
+			hashy[curr_sync] = new JobState(1, a, b, c, ai, aj, bi, bj, ci, cj, n, curr_sync, _sync_lock, parent_sync, sync_lock);
 			pthread_mutex_unlock(&hashLock);
 
 			//asign 4 jobs
-			superjob* j1 = new superjob(1, ++totaljobs, a, b, c, ai, aj, bi, bj, ci, cj, n/2, _sync1, tp, _sync_lock);
+			superjob* j1 = new superjob(1, ++totaljobs, a, b, c, ai, aj, bi, bj, ci, cj, n/2, curr_sync, tp, _sync_lock);
 			tp->assignJob(j1, tid);	
 
-			superjob* j2 = new superjob(1, ++totaljobs, a, b, c, ai, aj, bi, bj+n/2, ci, cj + n/2, n/2, _sync1, tp, _sync_lock);
+			superjob* j2 = new superjob(1, ++totaljobs, a, b, c, ai, aj, bi, bj+n/2, ci, cj + n/2, n/2, curr_sync, tp, _sync_lock);
 			tp->assignJob(j2, tid);	
 
-			superjob* j3 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj, bi, bj, ci+n/2, cj, n/2, _sync1, tp, _sync_lock);
+			superjob* j3 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj, bi, bj, ci+n/2, cj, n/2, curr_sync, tp, _sync_lock);
 			tp->assignJob(j3, tid);	
 
-			superjob* j4 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj, bi, bj+n/2, ci+n/2, cj+n/2, n/2, _sync1, tp, _sync_lock);
+			superjob* j4 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj, bi, bj+n/2, ci+n/2, cj+n/2, n/2, curr_sync, tp, _sync_lock);
 			tp->assignJob(j4, tid);						
 
 		
 		}
-
-
-		pthread_mutex_lock(sync_lock);
-		(*sync1)--;
-		pthread_mutex_unlock(sync_lock);
-		if (*sync1 == 0)
-		{
-			cout << "start 2nd part\n";
-			// assign part 2
-			pthread_mutex_lock(&hashLock);
-			if (hashy.find(sync1) == hashy.end())
-			{
-				cout << "Bug while executing 2\n";
-				return;
-			}
-			superjob* j = hashy[sync1];
-			pthread_mutex_unlock(&hashLock);
-
-			//create sub jobs
-
-
-			int* _sync2 = new int;
-			*_sync2 = 4;
-			pthread_mutex_t* __sync_lock = new pthread_mutex_t;
-			pthread_mutex_init(__sync_lock, NULL);		
-
-			superjob* sj1 = new superjob(2, ++totaljobs, j->a, j->b, j->c, j->ai, j->aj+j->n/2, j->bi+j->n/2, j->bj, j->ci, j->cj, j->n/2, _sync2, j->tp, __sync_lock);
-			tp->assignJob(sj1, tid);	
-
-			superjob* sj2 = new superjob(2, ++totaljobs, j->a, j->b, j->c, j->ai, j->aj+j->n/2, j->bi+j->n/2, j->bj+j->n/2, j->ci, j->cj + j->n/2, j->n/2, _sync2, tp, __sync_lock);
-			tp->assignJob(sj2, tid);	
-
-			superjob* sj3 = new superjob(2, ++totaljobs, j->a, j->b, j->c, j->ai+j->n/2, j->aj+j->n/2, j->bi+j->n/2, j->bj, j->ci+j->n/2, j->cj, j->n/2, _sync2, tp, __sync_lock);
-			tp->assignJob(sj3, tid);	
-
-			superjob* sj4 = new superjob(2, ++totaljobs, j->a, j->b, j->c, j->ai+j->n/2, j->aj+j->n/2, j->bi+j->n/2, j->bj+j->n/2, j->ci+j->n/2, j->cj+j->n/2, j->n/2, _sync2, tp, __sync_lock);
-			tp->assignJob(sj4, tid);		
-
-
-		}
 		
 
-	}
-
-
-	void secondjob(int tid){
-		if (n == 1)
-		{
-			c[ci][cj] += a[ai][aj] * b[bi][bj];
-		}
-		else
-		{
-			//create _a12, _b21, _c11
-
-			int* _sync2 = new int;
-			*_sync2 = 4;
-			pthread_mutex_t* _sync_lock = new pthread_mutex_t;
-			pthread_mutex_init(_sync_lock, NULL);			
-
-			//asign 4 jobs
-			superjob* j1 = new superjob(2, ++totaljobs, a, b, c, ai, aj+n/2, bi+n/2, bj, ci, cj, n/2, _sync2, tp, _sync_lock);
-			tp->assignJob(j1, tid);	
-
-			superjob* j2 = new superjob(2, ++totaljobs, a, b, c, ai, aj+n/2, bi+n/2, bj+n/2, ci, cj + n/2, n/2, _sync2, tp, _sync_lock);
-			tp->assignJob(j2, tid);	
-
-			superjob* j3 = new superjob(2, ++totaljobs, a, b, c, ai+n/2, aj+n/2, bi+n/2, bj, ci+n/2, cj, n/2, _sync2, tp, _sync_lock);
-			tp->assignJob(j3, tid);	
-
-			superjob* j4 = new superjob(2, ++totaljobs, a, b, c, ai+n/2, aj+n/2, bi+n/2, bj+n/2, ci+n/2, cj+n/2, n/2, _sync2, tp, _sync_lock);
-			tp->assignJob(j4, tid);						
-		}
-
-
-		pthread_mutex_lock(sync_lock);
-		(*sync1)--;
-		pthread_mutex_unlock(sync_lock);
-		if (*sync1 == 0)
-		{
-			// complete
-			cout << "Complete\n";			
-		}
-	
 	}
 
 	void working(void* param){
@@ -750,10 +890,6 @@ public:
 		if (type == 1)
 		{
 			firstjob(tid);
-		}
-		else
-		{
-			secondjob(tid);
 		}
 
 	}
@@ -767,14 +903,41 @@ public:
 void matrix_mul(int **a, int **b, int **c, int ai, int aj, int bi, int bj, int ci, int cj,int n, thread_pool* tp){
 
 
+	// int* basesync = new int;
+	// *basesync = 4;
+	// pthread_mutex_t* base_lock = new pthread_mutex_t;
+	// pthread_mutex_init(base_lock, NULL);	
+
+	// pthread_mutex_lock(&hashLock);
+	// JobState* nj = new JobState(1, a, b, c, ai, aj, bi, bj, ci, cj, n, basesync, base_lock, NULL, NULL);
+	// nj->base = 1;
+	// hashy[basesync] = nj;
+	// pthread_mutex_unlock(&hashLock);
+
 
 	int* _sync1 = new int;
 	*_sync1 = 4;	
 	pthread_mutex_t* _sync_lock = new pthread_mutex_t;
 	pthread_mutex_init(_sync_lock, NULL);		
 
+	pthread_mutex_lock(&hashLock);
+	JobState* nj = new JobState(1, a, b, c, ai, aj, bi, bj, ci, cj, n, _sync1, _sync_lock, NULL, NULL);
+	nj->base = true;
+	hashy[_sync1] = nj;
+	pthread_mutex_unlock(&hashLock);
+
+
 	superjob* j1 = new superjob(1, ++totaljobs, a, b, c, ai, aj, bi, bj, ci, cj, n, _sync1, tp, _sync_lock );
 	tp->assignJob(j1, 0);
+
+	// superjob* j2 = new superjob(1, ++totaljobs, a, b, c, ai, aj, bi, bj+n/2, ci, cj + n/2, n/2, _sync1, tp, _sync_lock );
+	// tp->assignJob(j2, 0);
+
+	// superjob* j3 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj, bi, bj, ci+n/2, cj, n/2, _sync1, tp, _sync_lock );
+	// tp->assignJob(j3, 0);
+
+	// superjob* j4 = new superjob(1, ++totaljobs, a, b, c, ai+n/2, aj, bi, bj+n/2, ci+n/2, cj+n/2, n/2, _sync1, tp, _sync_lock );
+	// tp->assignJob(j4, 0);			
 	// if (n == 1)
 	// {
 	// 	c[ci][cj] += a[ai][aj] * b[bi][bj];
@@ -782,23 +945,23 @@ void matrix_mul(int **a, int **b, int **c, int ai, int aj, int bi, int bj, int c
 	// else
 	// {
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai, aj, bi, bj, ci, cj, n/2);
+	// 	cilk_spawn matrix_mul(a, b, c, ai, aj, bi, bj, ci, cj, n/2, tp);
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai, aj, bi, bj+n/2, ci, cj + n/2, n/2);
+	// 	cilk_spawn matrix_mul(a, b, c, ai, aj, bi, bj+n/2, ci, cj + n/2, n/2, tp);
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj, bi, bj, ci+n/2, cj, n/2);
+	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj, bi, bj, ci+n/2, cj, n/2, tp);
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj, bi, bj+n/2, ci+n/2, cj+n/2, n/2);			
+	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj, bi, bj+n/2, ci+n/2, cj+n/2, n/2, tp);			
 
 	// 	cilk_sync;
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai, aj+n/2, bi+n/2, bj, ci, cj, n/2);
+	// 	cilk_spawn matrix_mul(a, b, c, ai, aj+n/2, bi+n/2, bj, ci, cj, n/2, tp);
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai, aj+n/2, bi+n/2, bj+n/2, ci, cj + n/2, n/2);
+	// 	cilk_spawn matrix_mul(a, b, c, ai, aj+n/2, bi+n/2, bj+n/2, ci, cj + n/2, n/2, tp);
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj, ci+n/2, cj, n/2);
+	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj, ci+n/2, cj, n/2, tp);
 
-	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj+n/2, ci+n/2, cj+n/2, n/2);	
+	// 	cilk_spawn matrix_mul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj+n/2, ci+n/2, cj+n/2, n/2, tp);	
 
 	// 	cilk_sync;
 
@@ -806,6 +969,38 @@ void matrix_mul(int **a, int **b, int **c, int ai, int aj, int bi, int bj, int c
 
 }
 
+
+void ultimate_matmul(int **a, int **b, int **c, int ai, int aj, int bi, int bj, int ci, int cj,int n, thread_pool* tp){
+
+	if (n == 1)
+	{
+		c[ci][cj] += a[ai][aj] * b[bi][bj];
+	}
+	else
+	{
+
+		cilk_spawn ultimate_matmul(a, b, c, ai, aj, bi, bj, ci, cj, n/2, tp);
+
+		cilk_spawn ultimate_matmul(a, b, c, ai, aj, bi, bj+n/2, ci, cj + n/2, n/2, tp);
+
+		cilk_spawn ultimate_matmul(a, b, c, ai+n/2, aj, bi, bj, ci+n/2, cj, n/2, tp);
+
+		cilk_spawn ultimate_matmul(a, b, c, ai+n/2, aj, bi, bj+n/2, ci+n/2, cj+n/2, n/2, tp);			
+
+		cilk_sync;
+
+		cilk_spawn ultimate_matmul(a, b, c, ai, aj+n/2, bi+n/2, bj, ci, cj, n/2, tp);
+
+		cilk_spawn ultimate_matmul(a, b, c, ai, aj+n/2, bi+n/2, bj+n/2, ci, cj + n/2, n/2, tp);
+
+		cilk_spawn ultimate_matmul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj, ci+n/2, cj, n/2, tp);
+
+		cilk_spawn ultimate_matmul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj+n/2, ci+n/2, cj+n/2, n/2, tp);	
+
+		cilk_sync;
+
+	}
+}
 
 void shareon(thread_pool* tp){
 
@@ -815,7 +1010,7 @@ void shareon(thread_pool* tp){
 
 
 void sleep10(){
-	sleep(10);
+	sleep(4);
 }
 
 
@@ -826,7 +1021,7 @@ int main(int argc, char const *argv[])
 	tp.start();
 	
 
-	int n = 4;
+	int n = 16;
 	int** x = new int*[n];
 	int** y = new int*[n];
 	int** z = new int*[n];
@@ -850,7 +1045,7 @@ int main(int argc, char const *argv[])
 
 	auto start = high_resolution_clock::now();
 	matrix_mul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
-
+	// ultimate_matmul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
 
 
 	auto stop = high_resolution_clock::now();
@@ -866,12 +1061,23 @@ int main(int argc, char const *argv[])
 		cout << endl;
 	}
 
-	sleep(2);
-	shareon(&tp);
+	// sleep(2);
+	// shareon(&tp);
 	// sleep(10);
-	cilk_spawn sleep10();
+	// cilk_spawn sleep10();
 
-	cilk_sync;
+	// cilk_sync;
+
+	while(!completedFlag){
+
+	}
+
+	// sleep(10);
+	// cout << "I am here";
+	// while(1);
+	// while(!tp.empty()){
+	// 	cout << "Still Working\n";
+	// }
 
 	for (int i = 0; i < n; ++i)
 	{
@@ -882,8 +1088,8 @@ int main(int argc, char const *argv[])
 		cout << endl;
 	}
 
-	// int xy;
-	// cin >> xy;
+	int xy;
+	cin >> xy;
 
 	return 0;
 }

@@ -7,7 +7,7 @@
 using namespace std;
  
 
-bool stealon = false;
+bool stealon = true;
 
 void thread_pool::shareon(){
     stealon = true;
@@ -49,7 +49,23 @@ void thread_pool::assignJob(job* _job_, int threadid)
     }
 }
 
-job* thread_pool::StealTask(worker_thread* p){
+bool thread_pool::empty(){
+    for (int i = 0; i < numOfThreads; ++i)
+    {
+        pthread_mutex_lock(&threads[i]->jobDequeue_lock);
+        // cout << "Checking for " << i<< endl;
+        if (!threads[i]->jobDequeue.empty())
+        {
+            pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
+            // cout << "Queue " << i << " is not empty\n";
+            return false;
+        }
+        pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
+    }    
+    return true;
+}
+
+job* thread_pool::StealTask(worker_thread* p, int mytid){
 
     if (!stealon)
     {
@@ -60,6 +76,11 @@ job* thread_pool::StealTask(worker_thread* p){
 
     for (int i = 0; i < numOfThreads; ++i)
     {
+        if (i == mytid)
+        {
+            // cout << "Do check for " << i << endl;
+            continue;
+        }
         
         if (!threads[i]->jobDequeue.empty())
         {
@@ -163,5 +184,5 @@ void *worker_thread::threadExecute(void *param)
 }
 
 job* worker_thread::StealTask(worker_thread* p){
-    return parentPool->StealTask(p);
+    return parentPool->StealTask(p, tid);
 }

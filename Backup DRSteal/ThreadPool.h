@@ -53,7 +53,8 @@ public:
     void assignJob(job *_job_, int tid);   //some huerestic to assign job to which thread round robin
     void start();
     void shareon();
-    job* StealTask(worker_thread* p);
+    job* StealTask(worker_thread* p, int mytid);
+    bool empty();
 
 private:
     vector<worker_thread*> threads;
