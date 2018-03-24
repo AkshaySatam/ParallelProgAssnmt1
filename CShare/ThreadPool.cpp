@@ -5,9 +5,21 @@
 #include "ThreadPool.h"
  
 using namespace std;
+
+
+// Compute a pseudorandom integer.
+// Output value in range [0, 32767]
+inline int fast_rand(void) {
+    g_seed = (214013*g_seed+2531011);
+    return (g_seed>>16)&0x1B;
+}
+
  
 #include <random>
 int thread_pool::getRandomNumber(){
+
+    return fast_rand();
+
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 eng(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, numOfThreads-1); // define the range

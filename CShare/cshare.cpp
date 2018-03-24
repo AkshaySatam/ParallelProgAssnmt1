@@ -15,6 +15,7 @@
 #include <iostream>
 #include <chrono>
 #include <cilk/cilk.h>
+#include <cilk/cilk_api.h>
 #include "ThreadPool.h"
 #include <unistd.h>
 #include <map>
@@ -683,7 +684,7 @@ int totaljobs = 0;
 
 	// 	------------------------------------------------------------------
 
-
+int basehit;
 volatile bool completedFlag = false;
 class JobState;
 class superjob;
@@ -761,12 +762,21 @@ public:
 
 	void firstjob(int tid){
 		// tid = 0;
-		if (n == 1)
+		if (n == basehit)
 		{
 			// cout << "Hit 1 job base\n";
-			c[ci][cj] += a[ai][aj] * b[bi][bj];
+			// c[ci][cj] += a[ai][aj] * b[bi][bj];
 
-		
+		    for (int i = ci; i < ci+n; i++)
+		    {
+		        for (int j = aj; j < aj+n; j++)
+		        {
+		        	for (int k = bj; k < bj+n; ++k)
+		        	{
+		        		c[i][j] += a[i][k]*b[k][j];
+		        	}
+				}
+		    }			
 
 
 			while (1)
@@ -1017,11 +1027,16 @@ void sleep10(){
 
 int main(int argc, char const *argv[])
 {
-	thread_pool tp(100);
+	fast_srand(time(NULL));
+	
+	int cores = __cilkrts_get_nworkers();
+	cout << "Cores available : " << cores << endl;
+
+	thread_pool tp(cores);
 	tp.start();
 	
-
-	int n = 32;
+	basehit = 256;
+	int n = 4096;
 	int** x = new int*[n];
 	int** y = new int*[n];
 	int** z = new int*[n];
@@ -1087,14 +1102,14 @@ int main(int argc, char const *argv[])
 	// 	// break;
 	// }
 
-	for (int i = 0; i < n; ++i)
-	{
-		for (int j = 0; j < n; ++j)
-		{
-			cout << z[i][j] << " ";
-		}
-		cout << endl;
-	}
+	// for (int i = 0; i < n; ++i)
+	// {
+	// 	for (int j = 0; j < n; ++j)
+	// 	{
+	// 		cout << z[i][j] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
 
 
 	tp.terminate();
