@@ -15,6 +15,7 @@
 #include <iostream>
 #include <chrono>
 #include <cilk/cilk.h>
+#include <cilk/cilk_api.h>
 #include "ThreadPool.h"
 #include <unistd.h>
 #include <map>
@@ -684,6 +685,7 @@ int totaljobs = 0;
 	// 	------------------------------------------------------------------
 
 
+int basehit;
 volatile bool completedFlag = false;
 class JobState;
 class superjob;
@@ -726,6 +728,8 @@ public:
 
 };
 
+
+
 class superjob: public job{
 public:
 	int type;
@@ -761,12 +765,23 @@ public:
 
 	void firstjob(int tid){
 		// tid = 0;
-		if (n == 1)
+		if (n == basehit)
 		{
 			// cout << "Hit 1 job base\n";
-			c[ci][cj] += a[ai][aj] * b[bi][bj];
+			// c[ci][cj] += a[ai][aj] * b[bi][bj];
 
-		
+			// cout << ci << " " << cj << " " << ai << " " << aj << " " << bi << " " << bj << " " << endl;
+
+		    for (int i = ci; i < ci+n; i++)
+		    {
+		        for (int j = aj; j < aj+n; j++)
+		        {
+		        	for (int k = bj; k < bj+n; ++k)
+		        	{
+		        		c[i][j] += a[i][k]*b[k][j];
+		        	}
+				}
+		    }		
 
 
 			while (1)
@@ -806,7 +821,9 @@ public:
 					break;
 				}
 
-
+				pthread_mutex_lock(&hashLock);
+				hashy.erase(parent_sync);
+				pthread_mutex_unlock(&hashLock);
 
 				parent_sync = parentState->parent_sync;
 				pthread_mutex_unlock(parentState->current_lock);
@@ -1014,14 +1031,21 @@ void sleep10(){
 }
 
 
-
 int main(int argc, char const *argv[])
 {
-	thread_pool tp(100);
-	tp.start();
-	
 
-	int n = 32;
+	fast_srand(time(NULL));
+	
+	int cores = __cilkrts_get_nworkers();
+	cout << "Cores available : " << cores << endl;
+
+	thread_pool tp(cores);
+	tp.start();
+
+
+	
+	basehit = 128;
+	int n = 256;
 	int** x = new int*[n];
 	int** y = new int*[n];
 	int** z = new int*[n];
@@ -1072,7 +1096,6 @@ int main(int argc, char const *argv[])
 
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
-	cout <<"Matrix multiplication : "<<duration.count() << endl;
 
 	// sleep(10);
 	// cout << "I am here";
@@ -1081,19 +1104,20 @@ int main(int argc, char const *argv[])
 	// 	cout << "Still Working\n";
 	// }
 
-	for (int i = 0; i < n; ++i)
-	{
-		for (int j = 0; j < n; ++j)
-		{
-			cout << z[i][j] << " ";
-		}
-		cout << endl;
-	}
+	// for (int i = 0; i < n; ++i)
+	// {
+	// 	for (int j = 0; j < n; ++j)
+	// 	{
+	// 		cout << z[i][j] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
 
 
 	tp.terminate();
+	cout <<"\nMatrix multiplication : "<<duration.count() << endl;
 
-	sleep(5);
+	// sleep(5);
 
 	// int xy;
 	// cin >> xy;
