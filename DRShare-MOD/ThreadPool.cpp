@@ -5,23 +5,27 @@
 #include "ThreadPool.h"
  
 using namespace std;
- 
-
-bool stealon = true;
-
-
-
-
 
 // Compute a pseudorandom integer.
 // Output value in range [0, 32767]
 inline int fast_rand(void) {
     g_seed = (214013*g_seed+2531011);
-    //0x10F
-    //0x1B
     return (g_seed>>16)&0x1B;
 }
 
+
+ 
+#include <random>
+int thread_pool::getRandomNumber(){
+    return fast_rand();
+
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 eng(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, numOfThreads-1); // define the range
+    return distr(eng);
+}
+
+bool stealon = false;
 
 void thread_pool::shareon(){
     stealon = true;
@@ -67,38 +71,45 @@ void thread_pool::assignJob(job* _job_, int threadid)
 {
     // static int threadid = 0;
     //some huerestic now trying round robin
-    threads[threadid]->assignJob(_job_);
-    if (threadid >= numOfThreads)
+    int thid = getRandomNumber();
+    int thid2 = getRandomNumber();
+
+    int choice = thid;
+    if (threads[thid2]->jobDequeue.size() < threads[thid]->jobDequeue.size())
     {
-        threadid = 0;
+        choice = thid2;
     }
+
+
+    while(threadid == choice || choice == 66){
+        // cout << "Getting equal\n";
+        choice = getRandomNumber();
+    }
+    // cout << "Assigning to " << thid  << " from " << threadid << endl;
+
+    threads[choice]->assignJob(_job_);
+
 }
+
+void thread_pool::assignJobMe(job* _job_, int tid){
+        threads[tid]->assignJob(_job_);
+}
+
 
 bool thread_pool::empty(){
     for (int i = 0; i < numOfThreads; ++i)
     {
+        cout << "Checking for " << i<< endl;
         pthread_mutex_lock(&threads[i]->jobDequeue_lock);
-        // cout << "Checking for " << i<< endl;
         if (!threads[i]->jobDequeue.empty())
         {
-            pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
-            // cout << "Queue " << i << " is not empty\n";
-            return false;
+            // pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
+            cout << "Queue " << i << " is not empty\n";
+            // return false;
         }
         pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
     }    
     return true;
-}
-
-#include <random>
-int thread_pool::getRandomNumber(){
-
-    return fast_rand();
-
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 eng(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, numOfThreads-1); // define the range
-    return distr(eng);
 }
 
 job* thread_pool::StealTask(worker_thread* p, int mytid){
@@ -111,11 +122,7 @@ job* thread_pool::StealTask(worker_thread* p, int mytid){
     //dont look for own queue here else u will get a deadlock
 
     int i = getRandomNumber();
-    while(i >= numOfThreads){
-        cout << i << endl;
-        i = getRandomNumber();
-    }
-    // cout << i << endl;
+
     
 
     // for (int i = 0; i < numOfThreads; ++i)
@@ -175,6 +182,7 @@ worker_thread::~worker_thread(){
 void worker_thread::assignJob(job *_job_){
     pthread_mutex_lock(&jobDequeue_lock);
     jobDequeue.push_back(_job_);
+    // cout << "Assigned to " << tid << endl;
     pthread_mutex_unlock(&jobDequeue_lock);
     // pthread_cond_signal(&jobDequeue_cond);   
 }
@@ -199,10 +207,10 @@ bool worker_thread::loadJob(job*& _job_, worker_thread* p)
         return true;
     }
     
-    if((_job_ = StealTask(p)) && _job_){
-        pthread_mutex_unlock(&jobDequeue_lock);
-        return true;
-    }
+    // if((_job_ = StealTask(p)) && _job_){
+    //     pthread_mutex_unlock(&jobDequeue_lock);
+    //     return true;
+    // }
 
     //if own job queue is empty look for other threads job queue and extract from back
     // _job_ = StealTask(p);

@@ -29,6 +29,7 @@ void dummy7_iter_mm_kij(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 
 void question2Exp(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
 void question2(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
+void question3(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
 
 void dummy_iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void dummy2_iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
@@ -38,76 +39,74 @@ void dummy5_iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void dummy6_iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void dummy7_iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 
-int  main2(){
-	int  x [n][n];
-	int  y [n][n];
-	int  z [n][n];
-	int  dummy [n][n];
-	int  (*p_x) [n][n] = &x;
-	int  (*p_y) [n][n] = &y;
-	int  (*p_z) [n][n] = &z;
-	int  (*p_dummy) [n][n] = &dummy;
-/*	
-	int events[2] = {PAPI_L1_TCM,PAPI_L2_TCM};
-	long long values[2];
-	PAPI_library_init(PAPI_VER_CURRENT);
-*/	
-	int ret;	
+int  main(){
+        int  x [n][n];
+        int  y [n][n];
+        int  z [n][n];
+        int  dummy [n][n];
+        int  (*p_x) [n][n] = &x;
+        int  (*p_y) [n][n] = &y;
+        int  (*p_z) [n][n] = &z;
+        int  (*p_dummy) [n][n] = &dummy;
 
-	readInput(p_x);
-	readInput(p_y);
-	initialize(p_z);
-	initialize(p_dummy);
-/*	
-	if (PAPI_num_counters() < 2) {
-   		fprintf(stderr, "No hardware counters here, or PAPI not supported.\n");
-   		exit(1);
-	}
-	
-	if ((ret = PAPI_start_counters(events, 2)) != PAPI_OK) {
-   		fprintf(stderr, "PAPI failed to start counters : %s\n", PAPI_strerror(ret));
-   		exit(1);
-	}
+        readInput(p_x);
+        readInput(p_y);
+        initialize(p_z);
+        initialize(p_dummy);
+        int retval;
 
+        retval = PAPI_library_init(PAPI_VER_CURRENT);
+        if (retval != PAPI_VER_CURRENT) {
+                printf("Error! PAPI_library_init %d\n",retval);
+        }
+
+        retval = PAPI_query_event(PAPI_L1_TCM);
+        if (retval != PAPI_OK) {
+                printf("L1 TCM not available\n");
+        }
+        retval = PAPI_query_event(PAPI_L2_TCM);
+        if (retval != PAPI_OK) {
+                printf("L2 TCM not available\n");
+        }
+
+/*
+        __cilkrts_set_param("nworkers","64");
+        int workers = __cilkrts_get_nworkers();
+        cout<<"Get workers "<<workers<<endl;
 */
-//	question2Exp(p_dummy,p_x,p_y,p_z,n);
-//	question2(p_dummy,p_x,p_y,p_z,n);
-
-	
-	iter_mm_kij(p_z,p_x,p_y,n);
-
-	initialize(p_z);
-	iter_mm_ijk(p_z,p_x,p_y,n);
-
-	initialize(p_z);
-	iter_mm_ikj(p_z,p_x,p_y,n);	
-
-	initialize(p_z);
-	iter_mm_jik(p_z,p_x,p_y,n);	
-
-	initialize(p_z);
-	iter_mm_jki(p_z,p_x,p_y,n);	
-
-	initialize(p_z);
-	iter_mm_kji(p_z,p_x,p_y,n);
 
 
-/*		
-	if ((ret = PAPI_read_counters(values, 2)) != PAPI_OK) {
-		fprintf(stderr, "PAPI failed to read counters: %s\n", PAPI_strerror(ret));
-		exit(1);
-	}
-	
-<<<<<<< HEAD
-	cout<<"L1 : "<<values[0]<<" L2: "<<values[0]<<" L3: "<<values[0]<<endl;
-	cout<<"Done with multiplication";
-	return 0;
-=======
-	cout<<"L1 : "<<values[0]<<" L2: "<<values[0]<<endl;
-*/	cout<<"Done with multiplication";
-	return  0;
+//      question2Exp(p_dummy,p_x,p_y,p_z,n);
+//      question2(p_dummy,p_x,p_y,p_z,n);
+        question3(p_dummy,p_x,p_y,p_z,n);
+/*
+        iter_mm_kij(p_z,p_x,p_y,n);
+
+        initialize(p_z);
+        iter_mm_ijk(p_z,p_x,p_y,n);
+
+        initialize(p_z);
+        iter_mm_ikj(p_z,p_x,p_y,n);
+
+        initialize(p_z);
+        iter_mm_jik(p_z,p_x,p_y,n);
+
+        initialize(p_z);
+        iter_mm_jki(p_z,p_x,p_y,n);
+
+        initialize(p_z);
+        iter_mm_kji(p_z,p_x,p_y,n);
+*/
+
+/*
+        if ((ret = PAPI_read_counters(values, 2)) != PAPI_OK) {
+                fprintf(stderr, "PAPI failed to read counters: %s\n", PAPI_strerror(ret));
+                exit(1);
+        }
+        cout<<"L1 : "<<values[0]<<" L2: "<<values[0]<<endl;
+*/      cout<<"Done with multiplication";
+        return  0;
 }
-
 
 void question2(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n){
 
@@ -130,6 +129,23 @@ void question2(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p
 	
 	initialize(p_z);
 	dummy7_iter_mm_ikj(p_z,p_x,p_y,n);	
+}
+
+void question3(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n){
+
+        initialize(p_z);
+        int events[2];
+        events[0] = PAPI_L1_TCM;
+        events[1] = PAPI_L2_TCM;
+        long long counts[2];
+        int retval,quiet;
+
+        PAPI_start_counters(events,2);
+        dummy3_iter_mm_ikj(p_z,p_x,p_y,n);
+
+        PAPI_stop_counters(counts,2);
+        cout <<"L1 count "<<counts[0]<<" L2 count "<<counts[1]<<" L3 count "<<counts[1]<< endl;
+        PAPI_shutdown();
 }
 
 void question2Exp(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n){

@@ -1024,7 +1024,7 @@ void sleep10(){
 }
 
 
-
+#include <papi.h>
 int main(int argc, char const *argv[])
 {
 	fast_srand(time(NULL));
@@ -1057,8 +1057,16 @@ int main(int argc, char const *argv[])
 	// shareon(&tp);
 
 	// cilk_sync;
+	int events[1];
+	events[0] = PAPI_L1_TCM;
+
+	long long counts[1];
+
+	int retval = PAPI_query_event(PAPI_L1_TCM);
 
 	auto start = high_resolution_clock::now();
+
+	PAPI_start_counters(events,1);
 	matrix_mul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
 	// ultimate_matmul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
 
@@ -1084,6 +1092,7 @@ int main(int argc, char const *argv[])
 	while(!completedFlag){
 
 	}
+	PAPI_stop_counters(counts, 1);
 
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
@@ -1113,6 +1122,7 @@ int main(int argc, char const *argv[])
 
 
 	tp.terminate();
+	cout << "L1 count : " << counts[0] << endl;
 
 	// int xy;
 	// cin >> xy;

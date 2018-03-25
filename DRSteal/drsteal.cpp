@@ -18,6 +18,7 @@
 #include <cilk/cilk_api.h>
 #include "ThreadPool.h"
 #include <unistd.h>
+#include <papi.h>
 #include <map>
 using namespace std;
 using namespace std::chrono;
@@ -1019,6 +1020,46 @@ void ultimate_matmul(int **a, int **b, int **c, int ai, int aj, int bi, int bj, 
 	}
 }
 
+void serial_matmul(int **a, int **b, int **c, int ai, int aj, int bi, int bj, int ci, int cj,int n, thread_pool* tp){
+
+	if (n == 1024)
+	{
+		// c[ci][cj] += a[ai][aj] * b[bi][bj];
+
+	    for (int i = ci; i < ci+n; i++)
+	    {
+	        for (int j = aj; j < aj+n; j++)
+	        {
+	        	for (int k = bj; k < bj+n; ++k)
+	        	{
+	        		c[i][j] += a[i][k]*b[k][j];
+	        	}
+			}
+	    }			
+	}
+	else
+	{
+
+		serial_matmul(a, b, c, ai, aj, bi, bj, ci, cj, n/2, tp);
+
+		serial_matmul(a, b, c, ai, aj, bi, bj+n/2, ci, cj + n/2, n/2, tp);
+
+		serial_matmul(a, b, c, ai+n/2, aj, bi, bj, ci+n/2, cj, n/2, tp);
+
+		serial_matmul(a, b, c, ai+n/2, aj, bi, bj+n/2, ci+n/2, cj+n/2, n/2, tp);			
+
+
+		serial_matmul(a, b, c, ai, aj+n/2, bi+n/2, bj, ci, cj, n/2, tp);
+
+		serial_matmul(a, b, c, ai, aj+n/2, bi+n/2, bj+n/2, ci, cj + n/2, n/2, tp);
+
+		serial_matmul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj, ci+n/2, cj, n/2, tp);
+
+		serial_matmul(a, b, c, ai+n/2, aj+n/2, bi+n/2, bj+n/2, ci+n/2, cj+n/2, n/2, tp);	
+
+	}
+}
+
 void shareon(thread_pool* tp){
 
 	// sleep(5);
@@ -1045,7 +1086,7 @@ int main(int argc, char const *argv[])
 
 	
 	basehit = 128;
-	int n = 256;
+	int n = 2048;
 	int** x = new int*[n];
 	int** y = new int*[n];
 	int** z = new int*[n];
@@ -1066,11 +1107,20 @@ int main(int argc, char const *argv[])
 	// shareon(&tp);
 
 	// cilk_sync;
+	int events[1];
+	events[0] = PAPI_L2_TCM;
+
+	long long counts[1];
+
+	int retval = PAPI_query_event(PAPI_L2_TCM);
 
 	auto start = high_resolution_clock::now();
+
+	PAPI_start_counters(events,1);
+
 	matrix_mul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
 	// ultimate_matmul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
-
+	// serial_matmul(x, y, z, 0, 0, 0, 0, 0, 0, n, NULL);
 
 
 
@@ -1094,6 +1144,8 @@ int main(int argc, char const *argv[])
 
 	}
 
+	PAPI_stop_counters(counts, 1);
+
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 
@@ -1116,6 +1168,8 @@ int main(int argc, char const *argv[])
 
 	tp.terminate();
 	cout <<"\nMatrix multiplication : "<<duration.count() << endl;
+
+	cout << "L2 count : " << counts[0] << endl;
 
 	// sleep(5);
 

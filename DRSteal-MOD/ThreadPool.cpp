@@ -17,8 +17,6 @@ bool stealon = true;
 // Output value in range [0, 32767]
 inline int fast_rand(void) {
     g_seed = (214013*g_seed+2531011);
-    //0x10F
-    //0x1B
     return (g_seed>>16)&0x1B;
 }
 
@@ -112,33 +110,45 @@ job* thread_pool::StealTask(worker_thread* p, int mytid){
 
     int i = getRandomNumber();
     while(i >= numOfThreads){
-        cout << i << endl;
+        // cout << i << endl;
         i = getRandomNumber();
     }
+
+    int j = getRandomNumber();
+    while(j >= numOfThreads || j == i){
+        // cout << i << endl;
+        j = getRandomNumber();
+    }    
     // cout << i << endl;
     
 
     // for (int i = 0; i < numOfThreads; ++i)
     // {
-        if (i == mytid)
+        if (i == mytid || j == mytid)
         {
             // cout << "Do check for " << i << endl;
             return NULL;
         }
         
-        if (!threads[i]->jobDequeue.empty())
+        int choice = i;
+        if (threads[i]->jobDequeue.size() > threads[j]->jobDequeue.size())
+        {
+            choice = i;
+        }
+
+        if (!threads[choice]->jobDequeue.empty())
         {
             // cout << "--------------Thread " << p->tid << " trying to steal Task from------" << i << endl;
-            pthread_mutex_lock(&threads[i]->jobDequeue_lock);
-            job* j = NULL;
-            if (!threads[i]->jobDequeue.empty())
+            pthread_mutex_lock(&threads[choice]->jobDequeue_lock);
+            job* jo = NULL;
+            if (!threads[choice]->jobDequeue.empty())
             {
-                j = threads[i]->jobDequeue.back();
-                threads[i]->jobDequeue.pop_back();
+                jo = threads[choice]->jobDequeue.back();
+                threads[choice]->jobDequeue.pop_back();
             }
-            pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
+            pthread_mutex_unlock(&threads[choice]->jobDequeue_lock);
             // cout << "--------------Thread " << p->tid << " steal Task from " << i << " success------ jobid " << j->jobID << endl;
-            return j;
+            return jo;
         }
         // pthread_mutex_unlock(&threads[i]->jobDequeue_lock);
     // }

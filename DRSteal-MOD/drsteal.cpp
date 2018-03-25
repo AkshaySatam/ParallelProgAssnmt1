@@ -684,6 +684,7 @@ int totaljobs = 0;
 
 	// 	------------------------------------------------------------------
 
+
 int basehit;
 volatile bool completedFlag = false;
 class JobState;
@@ -727,6 +728,8 @@ public:
 
 };
 
+
+
 class superjob: public job{
 public:
 	int type;
@@ -767,6 +770,8 @@ public:
 			// cout << "Hit 1 job base\n";
 			// c[ci][cj] += a[ai][aj] * b[bi][bj];
 
+			// cout << ci << " " << cj << " " << ai << " " << aj << " " << bi << " " << bj << " " << endl;
+
 		    for (int i = ci; i < ci+n; i++)
 		    {
 		        for (int j = aj; j < aj+n; j++)
@@ -776,7 +781,7 @@ public:
 		        		c[i][j] += a[i][k]*b[k][j];
 		        	}
 				}
-		    }			
+		    }		
 
 
 			while (1)
@@ -816,7 +821,9 @@ public:
 					break;
 				}
 
-
+				pthread_mutex_lock(&hashLock);
+				hashy.erase(parent_sync);
+				pthread_mutex_unlock(&hashLock);
 
 				parent_sync = parentState->parent_sync;
 				pthread_mutex_unlock(parentState->current_lock);
@@ -1027,13 +1034,15 @@ void sleep10(){
 #include <papi.h>
 int main(int argc, char const *argv[])
 {
-	fast_srand(time(NULL));
 
+	fast_srand(time(NULL));
+	
 	int cores = __cilkrts_get_nworkers();
 	cout << "Cores available : " << cores << endl;
 
-	thread_pool tp(cores);
+	thread_pool tp(28);
 	tp.start();
+
 
 	
 	basehit = 128;
@@ -1064,11 +1073,10 @@ int main(int argc, char const *argv[])
 	long long counts[1];
 
 	int retval = PAPI_query_event(PAPI_L2_TCM);
-
 	auto start = high_resolution_clock::now();
 
+	PAPI_start_counters(events,1);
 
-		PAPI_start_counters(events,1);
 	matrix_mul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
 	// ultimate_matmul(x, y, z, 0, 0, 0, 0, 0, 0, n, &tp);
 
@@ -1098,19 +1106,12 @@ int main(int argc, char const *argv[])
 
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
-	cout <<"Matrix multiplication : "<<duration.count() << endl;
-	cout << "L2 count : " << counts[0] << endl;
+
 	// sleep(10);
 	// cout << "I am here";
 	// while(1);
 	// while(!tp.empty()){
 	// 	cout << "Still Working\n";
-	// 	cout << "Still Working\n";
-	// 	cout << "Still Working\n";
-	// 	cout << "Still Working\n";
-	// 	cout << "Still Working\n";
-	
-	// 	// break;
 	// }
 
 	// for (int i = 0; i < n; ++i)
@@ -1124,6 +1125,11 @@ int main(int argc, char const *argv[])
 
 
 	tp.terminate();
+	cout <<"\nMatrix multiplication : "<<duration.count() << endl;
+	cout << "L2 count : " << counts[0] << endl;
+
+	// sleep(5);
+
 	// int xy;
 	// cin >> xy;
 
