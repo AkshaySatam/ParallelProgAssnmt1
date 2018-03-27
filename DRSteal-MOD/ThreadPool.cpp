@@ -17,7 +17,7 @@ bool stealon = true;
 // Output value in range [0, 32767]
 inline int fast_rand(void) {
     g_seed = (214013*g_seed+2531011);
-    return (g_seed>>16)&0x1B;
+    return (g_seed>>16)&0x43;
 }
 
 

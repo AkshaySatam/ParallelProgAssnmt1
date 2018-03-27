@@ -8,7 +8,7 @@
 using namespace std;
 using namespace std::chrono;
 
-int  n = pow(2,4);
+int  n = pow(2,10);
 void readInput(int  (*mat) [n][n]);
 void iter_mm_ijk(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
@@ -29,7 +29,8 @@ void dummy7_iter_mm_kij(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 
 void question2Exp(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
 void question2(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
-void question3(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
+void question1i(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
+void question1(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n);
 
 void dummy_iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
 void dummy2_iter_mm_ikj(int  (*z) [n][n],int (*x) [n][n],int (*y) [n][n],int n);
@@ -55,19 +56,19 @@ int  main(){
         initialize(p_dummy);
         int retval;
 
-        retval = PAPI_library_init(PAPI_VER_CURRENT);
-        if (retval != PAPI_VER_CURRENT) {
-                printf("Error! PAPI_library_init %d\n",retval);
-        }
+        // retval = PAPI_library_init(PAPI_VER_CURRENT);
+        // if (retval != PAPI_VER_CURRENT) {
+        //         printf("Error! PAPI_library_init %d\n",retval);
+        // }
 
-        retval = PAPI_query_event(PAPI_L1_TCM);
-        if (retval != PAPI_OK) {
-                printf("L1 TCM not available\n");
-        }
-        retval = PAPI_query_event(PAPI_L2_TCM);
-        if (retval != PAPI_OK) {
-                printf("L2 TCM not available\n");
-        }
+        // retval = PAPI_query_event(PAPI_L1_TCM);
+        // if (retval != PAPI_OK) {
+        //         printf("L1 TCM not available\n");
+        // }
+        // retval = PAPI_query_event(PAPI_L2_TCM);
+        // if (retval != PAPI_OK) {
+        //         printf("L2 TCM not available\n");
+        // }
 
 /*
         __cilkrts_set_param("nworkers","64");
@@ -78,25 +79,13 @@ int  main(){
 
 //      question2Exp(p_dummy,p_x,p_y,p_z,n);
 //      question2(p_dummy,p_x,p_y,p_z,n);
-        question3(p_dummy,p_x,p_y,p_z,n);
-/*
-        iter_mm_kij(p_z,p_x,p_y,n);
+        
+       question1i(p_dummy,p_x,p_y,p_z,n);
 
-        initialize(p_z);
-        iter_mm_ijk(p_z,p_x,p_y,n);
 
-        initialize(p_z);
-        iter_mm_ikj(p_z,p_x,p_y,n);
+        // question1(p_dummy, p_z,p_x,p_y,n);
 
-        initialize(p_z);
-        iter_mm_jik(p_z,p_x,p_y,n);
 
-        initialize(p_z);
-        iter_mm_jki(p_z,p_x,p_y,n);
-
-        initialize(p_z);
-        iter_mm_kji(p_z,p_x,p_y,n);
-*/
 
 /*
         if ((ret = PAPI_read_counters(values, 2)) != PAPI_OK) {
@@ -106,6 +95,38 @@ int  main(){
         cout<<"L1 : "<<values[0]<<" L2: "<<values[0]<<endl;
 */      cout<<"Done with multiplication";
         return  0;
+}
+
+void question1(int(*p_dummy) [n][n], int (*p_x) [n][n], int (*p_y) [n][n], int (*p_z) [n][n], int n){
+
+        int events[1];
+        events[0] = PAPI_L2_TCM;
+        long long counts[1];
+        int retval = PAPI_query_event(PAPI_L2_TCM);
+       
+
+        PAPI_start_counters(events,1);
+        // iter_mm_kij(p_z,p_x,p_y,n);
+
+        // initialize(p_z);
+        // iter_mm_ijk(p_z,p_x,p_y,n);
+
+        // initialize(p_z);
+        // iter_mm_ikj(p_z,p_x,p_y,n);
+
+        // initialize(p_z);
+        // iter_mm_jik(p_z,p_x,p_y,n);
+
+        // initialize(p_z);
+        // iter_mm_jki(p_z,p_x,p_y,n);
+
+        // initialize(p_z);
+        iter_mm_kji(p_z,p_x,p_y,n);
+
+        PAPI_stop_counters(counts,1);
+        cout <<"L2 count "<<counts[0] << endl;
+        PAPI_shutdown();        
+
 }
 
 void question2(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n){
@@ -131,20 +152,20 @@ void question2(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p
 	dummy7_iter_mm_ikj(p_z,p_x,p_y,n);	
 }
 
-void question3(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n){
+void question1i(int(*p_dummy) [n][n], int (*p_x) [n][n],int (*p_y) [n][n],int (*p_z) [n][n],int n){
 
         initialize(p_z);
-        int events[2];
-        events[0] = PAPI_L1_TCM;
-        events[1] = PAPI_L2_TCM;
-        long long counts[2];
+        int events[1];
+        events[0] = PAPI_L2_TCM;
+        // events[1] = PAPI_L2_TCM;
+        long long counts[1];
         int retval,quiet;
-
-        PAPI_start_counters(events,2);
+        retval = PAPI_query_event(PAPI_L2_TCM);
+        PAPI_start_counters(events,1);
         dummy3_iter_mm_ikj(p_z,p_x,p_y,n);
 
-        PAPI_stop_counters(counts,2);
-        cout <<"L1 count "<<counts[0]<<" L2 count "<<counts[1]<<" L3 count "<<counts[1]<< endl;
+        PAPI_stop_counters(counts,1);
+        cout <<"L2 count "<<counts[0] << endl;
         PAPI_shutdown();
 }
 

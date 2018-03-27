@@ -1032,7 +1032,7 @@ int main(int argc, char const *argv[])
 	int cores = __cilkrts_get_nworkers();
 	cout << "Cores available : " << cores << endl;
 
-	thread_pool tp(cores);
+	thread_pool tp(68);
 	tp.start();
 	
 	basehit = 256;

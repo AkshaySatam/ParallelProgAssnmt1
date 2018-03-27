@@ -19,7 +19,7 @@ inline int fast_rand(void) {
     g_seed = (214013*g_seed+2531011);
     //0x10F
     //0x1B
-    return (g_seed>>16)&0x1B;
+    return (g_seed>>16)&0x43;
 }
 
 
